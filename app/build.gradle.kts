@@ -58,6 +58,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.1.2")
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    testImplementation("org.testng:testng:6.9.6")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -65,7 +66,4 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("androidx.wear:wear:1.3.0")
-    //implementation("androidx.compose.ui:ui:1.1.0-alpha07")
-    //implementation("androidx.compose.material:material:1.1.0-alpha07")
-    //implementation("androidx.ui:ui-tooling:1.1.0-alpha07")
 }
