@@ -31,6 +31,7 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import com.eipsaferoad.owl.heartRate.HeartRateService
 import com.eipsaferoad.owl.presentation.ComposableFun
@@ -38,6 +39,7 @@ import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.ReadEnvVar
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity(),
         filter.addAction("updateHR")
         registerReceiver(broadcastReceiver, filter)
         setTheme(android.R.style.Theme_DeviceDefault)
+        val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
             WearApp(bpm.value)
         }
