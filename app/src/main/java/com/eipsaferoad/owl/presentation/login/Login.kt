@@ -19,25 +19,32 @@ import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import okhttp3.FormBody
+import okhttp3.Headers
 
-fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit) {
+fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+    val headers = Headers.Builder()
+        .build()
     val formBody = FormBody.Builder()
         .add("email", email)
         .add("password", password)
         .build()
     Request.makeRequest(
         "$apiUrl/api/auth/login",
+        headers,
         formBody
     ) {
         dto ->
         run {
+            val data = dto.getJSONObject("data")
+
+            setAccessToken(data.getString("token"))
             changePage(PagesEnum.HOME.value)
         }
     }
 }
 
 @Composable
-fun Login(apiUrl: String, changePage: (page: Int) -> Unit) {
+fun Login(apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -52,7 +59,7 @@ fun Login(apiUrl: String, changePage: (page: Int) -> Unit) {
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                login(apiUrl = apiUrl, email = email.value, password = password.value, changePage)
+                login(apiUrl = apiUrl, email = email.value, password = password.value, changePage, setAccessToken)
             }
         ) {
             Text(text = "login")
@@ -66,7 +73,7 @@ fun PreviewLogin() {
     OwlTheme {
         Box(
         ) {
-            Login(apiUrl = "", changePage = {})
+            Login(apiUrl = "", changePage = {}, setAccessToken = {})
         }
     }
 }

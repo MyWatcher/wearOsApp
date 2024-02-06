@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
+import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONException
@@ -15,11 +16,12 @@ class Request {
 
     companion object {
 
-        private fun post(url: String, body: FormBody): String {
+        private fun post(url: String, headers: Headers, body: FormBody): String {
             val client = OkHttpClient()
             val request = Request.Builder()
                 .url(url)
                 .post(body)
+                .headers(headers)
                 .build()
 
             try {
@@ -33,11 +35,11 @@ class Request {
             }
         }
 
-        fun makeRequest(url: String, body: FormBody, callback: (dto: JSONObject) -> Unit) {
+        fun makeRequest(url: String, headers: Headers, body: FormBody, callback: (dto: JSONObject) -> Unit) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     val response = withContext(Dispatchers.IO) {
-                        post(url, body)
+                        post(url, headers, body)
                     }
                     withContext(Dispatchers.Main) {
                         try {
