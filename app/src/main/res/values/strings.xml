@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">owl</string>
-    <string name="api_url">http://35.180.167.90:5000</string>
+    <string name="api_url">http://35.181.57.245:5000</string>
 </resources>

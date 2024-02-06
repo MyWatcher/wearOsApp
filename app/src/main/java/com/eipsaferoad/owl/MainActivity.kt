@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -31,8 +30,8 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
+import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.heartRate.HeartRateService
 import com.eipsaferoad.owl.presentation.ComposableFun
 import com.eipsaferoad.owl.presentation.PagesEnum
@@ -47,6 +46,8 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
+import okhttp3.FormBody
+import okhttp3.Headers
 
 class MainActivity : ComponentActivity(),
     AmbientModeSupport.AmbientCallbackProvider,
@@ -55,6 +56,8 @@ class MainActivity : ComponentActivity(),
     CapabilityClient.OnCapabilityChangedListener {
 
     private var bpm: MutableState<String> = mutableStateOf("0")
+    private var accessToken: MutableState<String?> = mutableStateOf(null)
+    private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
     private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
         override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
@@ -78,9 +81,9 @@ class MainActivity : ComponentActivity(),
         filter.addAction("updateHR")
         registerReceiver(broadcastReceiver, filter)
         setTheme(android.R.style.Theme_DeviceDefault)
-        val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(bpm.value)
+            WearApp(bpm.value, url.value) {token -> accessToken.value = token }
         }
     }
 
@@ -117,7 +120,6 @@ class MainActivity : ComponentActivity(),
     private inner class MyAmbientCallback : AmbientCallback() {
         override fun onEnterAmbient(ambientDetails: Bundle) {
             super.onEnterAmbient(ambientDetails)
-            Log.d("PAD", "grosse bite")
         }
 
         override fun onUpdateAmbient() {
@@ -158,20 +160,27 @@ class MainActivity : ComponentActivity(),
     private var broadcastReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(context: Context?, intent: Intent?) {
-            var newBpm: Any? = intent?.extras?.get("bpm") ?: return;
-            if (newBpm != null) {
-                bpm.value = newBpm.toString()
+            val newBpm: Any = intent?.extras?.get("bpm") ?: return;
+            bpm.value = newBpm.toString()
+            if (!accessToken.value.isNullOrEmpty()) {
+                val formBody = FormBody.Builder()
+                    .add("heartRate", bpm.value)
+                    .build()
+                val headers = Headers.Builder()
+                    .add("Authorization", "Bearer ${accessToken.value}")  // Replace "coucou" with your actual token
+                    .build()
+                Request.makeRequest("${url.value}/api/heart-rate", headers, formBody) {}
             }
         }
     }
 }
 
 @Composable
-fun WearApp(currentHeartRate: String) {
+fun WearApp(currentHeartRate: String, apiUrl: String, setAccessToken: (token: String) -> Unit) {
     val selectedPage = remember { mutableIntStateOf(PagesEnum.LOGIN.value) }
     val pages = listOf<ComposableFun>(
-        { Login { page -> selectedPage.value = page } },
-        { Home(currentHeartRate) { page -> selectedPage.value = page }
+        { Login(apiUrl, {  page -> selectedPage.intValue = page }, setAccessToken) },
+        { Home(currentHeartRate) { page -> selectedPage.intValue = page }
     })
 
     OwlTheme {
@@ -190,5 +199,5 @@ fun WearApp(currentHeartRate: String) {
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android")
+    WearApp("Preview Android", "") {}
 }

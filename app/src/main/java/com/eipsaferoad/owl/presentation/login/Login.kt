@@ -1,6 +1,5 @@
 package com.eipsaferoad.owl.presentation.login
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,12 +14,37 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
+import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import okhttp3.FormBody
+import okhttp3.Headers
+
+fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+    val headers = Headers.Builder()
+        .build()
+    val formBody = FormBody.Builder()
+        .add("email", email)
+        .add("password", password)
+        .build()
+    Request.makeRequest(
+        "$apiUrl/api/auth/login",
+        headers,
+        formBody
+    ) {
+        dto ->
+        run {
+            val data = dto.getJSONObject("data")
+
+            setAccessToken(data.getString("token"))
+            changePage(PagesEnum.HOME.value)
+        }
+    }
+}
 
 @Composable
-fun Login(changePage: (page: Int) -> Unit) {
+fun Login(apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -29,14 +53,13 @@ fun Login(changePage: (page: Int) -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         TextInput(placeholder = "Email", value = email.value, onChange = { value -> email.value = value })
-        TextInput(placeholder = "Password", value = password.value, onChange = { value -> password.value = value })
+        TextInput(placeholder = "Password", value = '.'.toString().repeat(password.value.length), onChange = { value -> password.value = value })
         Button(
             modifier = Modifier
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                Log.d("Login", "email: ${email.value} password: ${password.value}")
-                changePage(PagesEnum.HOME.value)
+                login(apiUrl = apiUrl, email = email.value, password = password.value, changePage, setAccessToken)
             }
         ) {
             Text(text = "login")
@@ -50,7 +73,7 @@ fun PreviewLogin() {
     OwlTheme {
         Box(
         ) {
-            Login(changePage = {})
+            Login(apiUrl = "", changePage = {}, setAccessToken = {})
         }
     }
 }
