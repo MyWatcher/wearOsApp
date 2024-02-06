@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity(),
         filter.addAction("updateHR")
         registerReceiver(broadcastReceiver, filter)
         setTheme(android.R.style.Theme_DeviceDefault)
-        val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        // val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
             WearApp(bpm.value)
         }
