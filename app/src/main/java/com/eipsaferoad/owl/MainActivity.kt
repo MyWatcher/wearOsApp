@@ -78,9 +78,9 @@ class MainActivity : ComponentActivity(),
         filter.addAction("updateHR")
         registerReceiver(broadcastReceiver, filter)
         setTheme(android.R.style.Theme_DeviceDefault)
-        // val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        val apiUrl = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(bpm.value)
+            WearApp(bpm.value, apiUrl)
         }
     }
 
@@ -167,10 +167,10 @@ class MainActivity : ComponentActivity(),
 }
 
 @Composable
-fun WearApp(currentHeartRate: String) {
+fun WearApp(currentHeartRate: String, apiUrl: String) {
     val selectedPage = remember { mutableIntStateOf(PagesEnum.LOGIN.value) }
     val pages = listOf<ComposableFun>(
-        { Login { page -> selectedPage.value = page } },
+        { Login(apiUrl) {  page -> selectedPage.value = page } },
         { Home(currentHeartRate) { page -> selectedPage.value = page }
     })
 
@@ -190,5 +190,5 @@ fun WearApp(currentHeartRate: String) {
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android")
+    WearApp("Preview Android", "")
 }

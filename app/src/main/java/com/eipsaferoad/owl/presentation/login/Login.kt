@@ -18,9 +18,62 @@ import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONException
+import org.json.JSONObject
+import okhttp3.FormBody
+
+fun makeApiCall(url: String, email: String, password: String): String {
+    val client = OkHttpClient()
+    val formBody = FormBody.Builder()
+        .add("email", email)
+        .add("password", password)
+        .build()
+    val request = Request.Builder()
+        .url(url)
+        .post(formBody)
+        .build()
+
+    try {
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) {
+            throw Exception("Error: Request failed with code ${response.code}")
+        }
+        return response.body!!.string()
+    } catch (e: Exception) {
+        throw e
+    }
+}
+fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit) {
+    CoroutineScope(Dispatchers.Main).launch {
+        try {
+            val response = withContext(Dispatchers.IO) {
+                makeApiCall("$apiUrl/api/auth/login", email, password)
+            }
+            withContext(Dispatchers.Main) {
+                try {
+                    val jsonObject = JSONObject(response)
+                    val data = jsonObject.getJSONObject("data")
+                    val token = data.getString("token")
+                    val message = jsonObject.getString("message")
+                    changePage(PagesEnum.HOME.value)
+                } catch (e: JSONException) {
+                    Log.e("Login", "Error parsing JSON: $e")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("Login", "Error logging in: $e")
+        }
+    }
+}
 
 @Composable
-fun Login(changePage: (page: Int) -> Unit) {
+fun Login(apiUrl: String, changePage: (page: Int) -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -35,8 +88,7 @@ fun Login(changePage: (page: Int) -> Unit) {
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                Log.d("Login", "email: ${email.value} password: ${password.value}")
-                changePage(PagesEnum.HOME.value)
+                login(apiUrl = apiUrl, email = email.value, password = password.value, changePage)
             }
         ) {
             Text(text = "login")
@@ -50,7 +102,7 @@ fun PreviewLogin() {
     OwlTheme {
         Box(
         ) {
-            Login(changePage = {})
+            Login(apiUrl = "", changePage = {})
         }
     }
 }
