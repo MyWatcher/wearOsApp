@@ -53,7 +53,7 @@ fun Login(apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (toke
         verticalArrangement = Arrangement.Center
     ) {
         TextInput(placeholder = "Email", value = email.value, onChange = { value -> email.value = value })
-        TextInput(placeholder = "Password", value = password.value, onChange = { value -> password.value = value })
+        TextInput(placeholder = "Password", value = '.'.toString().repeat(password.value.length), onChange = { value -> password.value = value })
         Button(
             modifier = Modifier
                 .width(100.dp)
