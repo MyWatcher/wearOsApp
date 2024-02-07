@@ -1,5 +1,6 @@
-package com.eipsaferoad.owl.presentation.home
+package com.eipsaferoad.owl.presentation.settings
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,39 +23,28 @@ import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
-fun Home(currentHeartRate: String, changePage: (page: Int) -> Unit) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Favorite,
-                contentDescription = "Favorite Icon",
-                tint = Color.Red
-            )
+fun Settings(context: Context, changePage: (page: Int) -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Button(onClick = {
+            LocalStorage.deleteData(context, "email")
+            LocalStorage.deleteData(context, "password")
+            changePage(PagesEnum.LOGIN.value)
+        }) {
             Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                text = currentHeartRate,
-                fontSize = 40.sp
+                text = "Disconnection",
             )
-            Button(onClick = {
-                changePage(PagesEnum.SETTINGS.value)
-            }) {
-                Text(
-                    text = "Settings",
-                )
-            }
+        }
     }
 }
 
 @Composable
 @Preview
-fun PreviewHome() {
+fun PreviewSettings() {
     OwlTheme {
-            Home(currentHeartRate = "42", changePage = {})
+        /*Settings(changePage = {})*/
     }
 }

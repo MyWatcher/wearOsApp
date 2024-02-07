@@ -1,5 +1,6 @@
 package com.eipsaferoad.owl.presentation.login
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +19,11 @@ import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.LocalStorage
 import okhttp3.FormBody
 import okhttp3.Headers
 
-fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+fun login(context: Context, apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
     val headers = Headers.Builder()
         .build()
     val formBody = FormBody.Builder()
@@ -38,13 +40,15 @@ fun login(apiUrl: String, email: String, password: String, changePage: (page: In
             val data = dto.getJSONObject("data")
 
             setAccessToken(data.getString("token"))
+            LocalStorage.setData(context, "email", email)
+            LocalStorage.setData(context, "password", password)
             changePage(PagesEnum.HOME.value)
         }
     }
 }
 
 @Composable
-fun Login(apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+fun Login(context: Context, apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -59,7 +63,7 @@ fun Login(apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (toke
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                login(apiUrl = apiUrl, email = email.value, password = password.value, changePage, setAccessToken)
+                login(context = context, apiUrl = apiUrl, email = email.value, password = password.value, changePage, setAccessToken)
             }
         ) {
             Text(text = "login")
@@ -73,7 +77,7 @@ fun PreviewLogin() {
     OwlTheme {
         Box(
         ) {
-            Login(apiUrl = "", changePage = {}, setAccessToken = {})
+            /*Login(apiUrl = "", changePage = {}, setAccessToken = {})*/
         }
     }
 }

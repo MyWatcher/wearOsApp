@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,7 +38,9 @@ import com.eipsaferoad.owl.presentation.ComposableFun
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
+import com.eipsaferoad.owl.presentation.settings.Settings
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.ReadEnvVar
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
@@ -83,7 +86,7 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(bpm.value, url.value) {token -> accessToken.value = token }
+            WearApp(this, bpm.value, url.value) {token -> accessToken.value = token }
         }
     }
 
@@ -175,13 +178,41 @@ class MainActivity : ComponentActivity(),
     }
 }
 
+fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+    val headers = Headers.Builder()
+        .build()
+    val formBody = FormBody.Builder()
+        .add("email", email)
+        .add("password", password)
+        .build()
+    Request.makeRequest(
+        "$apiUrl/api/auth/login",
+        headers,
+        formBody
+    ) {
+            dto ->
+        run {
+            val data = dto.getJSONObject("data")
+
+            setAccessToken(data.getString("token"))
+            changePage(PagesEnum.HOME.value)
+        }
+    }
+}
+
 @Composable
-fun WearApp(currentHeartRate: String, apiUrl: String, setAccessToken: (token: String) -> Unit) {
+fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAccessToken: (token: String) -> Unit) {
     val selectedPage = remember { mutableIntStateOf(PagesEnum.LOGIN.value) }
     val pages = listOf<ComposableFun>(
-        { Login(apiUrl, {  page -> selectedPage.intValue = page }, setAccessToken) },
-        { Home(currentHeartRate) { page -> selectedPage.intValue = page }
-    })
+        { Login(context, apiUrl, {  page -> selectedPage.intValue = page }, setAccessToken) },
+        { Home(currentHeartRate) { page -> selectedPage.intValue = page } },
+        { Settings(context) { page -> selectedPage.intValue = page } }
+    )
+    val email = LocalStorage.getData(context, "email");
+    val password = LocalStorage.getData(context, "password");
+    if (email != null && password != null) {
+        login(apiUrl = apiUrl, email = email, password = password, {  page -> selectedPage.intValue = page }, setAccessToken)
+    }
 
     OwlTheme {
         Box(
@@ -199,5 +230,5 @@ fun WearApp(currentHeartRate: String, apiUrl: String, setAccessToken: (token: St
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp("Preview Android", "") {}
+    /*WearApp(, "Preview Android", "") {}*/
 }
