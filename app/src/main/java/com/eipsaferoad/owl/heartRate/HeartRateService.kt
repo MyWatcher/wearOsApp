@@ -87,7 +87,7 @@ class HeartRateService : Service(), SensorEventListener2 {
         mHeartRateSensor?.also { heartRate ->
             mSensorManager.registerListener(this, heartRate, SensorManager.SENSOR_DELAY_NORMAL)
         }
-        return START_STICKY;
+        return START_NOT_STICKY;
     }
 
     override fun onBind(intent: Intent?): IBinder? {
