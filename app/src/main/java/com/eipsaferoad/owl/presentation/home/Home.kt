@@ -14,15 +14,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
-fun Home(currentHeartRate: String, changePage: (page: Int) -> Unit) {
+fun Home(currentHeartRate: String, navController: NavHostController) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -42,7 +44,7 @@ fun Home(currentHeartRate: String, changePage: (page: Int) -> Unit) {
                 fontSize = 40.sp
             )
             Button(onClick = {
-                changePage(PagesEnum.SETTINGS.value)
+                navController.navigate(PagesEnum.SETTINGS.value)
             }) {
                 Text(
                     text = "Settings",
@@ -54,7 +56,8 @@ fun Home(currentHeartRate: String, changePage: (page: Int) -> Unit) {
 @Composable
 @Preview
 fun PreviewHome() {
+    val navController = rememberSwipeDismissableNavController()
     OwlTheme {
-            Home(currentHeartRate = "42", changePage = {})
+            Home(currentHeartRate = "42", navController)
     }
 }

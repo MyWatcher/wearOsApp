@@ -27,11 +27,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.navigation.NavHostController
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
+import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.navigation.SwipeDismissableNavHost
+import androidx.wear.compose.navigation.composable
+import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.heartRate.HeartRateService
 import com.eipsaferoad.owl.presentation.ComposableFun
@@ -178,7 +184,7 @@ class MainActivity : ComponentActivity(),
     }
 }
 
-fun login(apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+fun login(apiUrl: String, email: String, password: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
     val headers = Headers.Builder()
         .build()
     val formBody = FormBody.Builder()
@@ -195,34 +201,69 @@ fun login(apiUrl: String, email: String, password: String, changePage: (page: In
             val data = dto.getJSONObject("data")
 
             setAccessToken(data.getString("token"))
-            changePage(PagesEnum.HOME.value)
+            navController.navigate(PagesEnum.HOME.value)
         }
     }
 }
 
 @Composable
 fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAccessToken: (token: String) -> Unit) {
-    val selectedPage = remember { mutableIntStateOf(PagesEnum.LOGIN.value) }
-    val pages = listOf<ComposableFun>(
-        { Login(context, apiUrl, {  page -> selectedPage.intValue = page }, setAccessToken) },
-        { Home(currentHeartRate) { page -> selectedPage.intValue = page } },
-        { Settings(context) { page -> selectedPage.intValue = page } }
-    )
+    val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
     if (email != null && password != null) {
-        login(apiUrl = apiUrl, email = email, password = password, {  page -> selectedPage.intValue = page }, setAccessToken)
+        login(apiUrl = apiUrl, email = email, password = password, navController , setAccessToken)
     }
 
     OwlTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
+        SwipeDismissableNavHost(
+            navController = navController,
+            startDestination = "login"
         ) {
-            TimeText()
-            pages[selectedPage.value]()
+            composable(PagesEnum.HOME.value) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeText()
+                    Home(currentHeartRate, navController)
+                }
+            }
+            composable(PagesEnum.LOGIN.value) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeText()
+                    Login(context, apiUrl, navController, setAccessToken)
+                }
+            }
+            composable(PagesEnum.SETTINGS.value) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeText()
+                    Settings(context, navController)
+                }
+            }
+            composable(PagesEnum.ALARM.value) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeText()
+                    Settings(context, navController)
+                }
+            }
         }
     }
 }

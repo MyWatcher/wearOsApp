@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.api.Request
@@ -23,7 +24,7 @@ import com.eipsaferoad.owl.utils.LocalStorage
 import okhttp3.FormBody
 import okhttp3.Headers
 
-fun login(context: Context, apiUrl: String, email: String, password: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+fun login(context: Context, apiUrl: String, email: String, password: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
     val headers = Headers.Builder()
         .build()
     val formBody = FormBody.Builder()
@@ -42,13 +43,13 @@ fun login(context: Context, apiUrl: String, email: String, password: String, cha
             setAccessToken(data.getString("token"))
             LocalStorage.setData(context, "email", email)
             LocalStorage.setData(context, "password", password)
-            changePage(PagesEnum.HOME.value)
+            navController.navigate(PagesEnum.HOME.value)
         }
     }
 }
 
 @Composable
-fun Login(context: Context, apiUrl: String, changePage: (page: Int) -> Unit, setAccessToken: (token: String) -> Unit) {
+fun Login(context: Context, apiUrl: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
@@ -63,7 +64,7 @@ fun Login(context: Context, apiUrl: String, changePage: (page: Int) -> Unit, set
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                login(context = context, apiUrl = apiUrl, email = email.value, password = password.value, changePage, setAccessToken)
+                login(context = context, apiUrl = apiUrl, email = email.value, password = password.value, navController, setAccessToken)
             }
         ) {
             Text(text = "login")
