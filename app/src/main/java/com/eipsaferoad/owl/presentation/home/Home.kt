@@ -33,11 +33,11 @@ import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
 fun Home(currentHeartRate: String, context: Context, navController: NavHostController) {
-        if (currentHeartRate.toInt() < 50 && currentHeartRate.toInt() != 0) {
-            Alarm(currentHeartRate, context, navController)
-        } else {
-            NoAlarm(currentHeartRate, context, navController)
-        }
+    if (currentHeartRate.toInt() < 50 && currentHeartRate.toInt() != 0) {
+        Alarm(currentHeartRate, context, navController)
+    } else {
+        NoAlarm(currentHeartRate, context, navController)
+    }
 }
 
 @Composable
