@@ -34,27 +34,33 @@ import com.eipsaferoad.owl.utils.LocalStorage
 @Composable
 fun Home(currentHeartRate: String, context: Context, navController: NavHostController) {
         if (currentHeartRate.toInt() < 50 && currentHeartRate.toInt() != 0) {
-            navController.navigate(PagesEnum.ALARM.value)
+            Alarm(currentHeartRate, context, navController)
+        } else {
+            NoAlarm(currentHeartRate, context, navController)
         }
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Favorite,
-                contentDescription = "Favorite Icon",
-                tint = Color.Red
-            )
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                text = currentHeartRate,
-                fontSize = 40.sp
-            )
-            Buttons(context = context, navController = navController)
+}
+
+@Composable
+fun NoAlarm(currentHeartRate: String, context: Context, navController: NavHostController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Favorite,
+            contentDescription = "Favorite Icon",
+            tint = Color.Red
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            text = currentHeartRate,
+            fontSize = 40.sp
+        )
+        Buttons(context = context, navController = navController)
     }
 }
 
@@ -96,6 +102,29 @@ fun Buttons(context: Context, navController: NavHostController) {
 }
 
 @Composable
+fun Alarm(currentHeartRate: String, context: Context, navController: NavHostController) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Favorite,
+            contentDescription = "Favorite Icon",
+            tint = Color.Red
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            text = currentHeartRate,
+            fontSize = 40.sp
+        )
+    }
+}
+
+@Composable
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 fun PreviewHome() {
     val navController = rememberSwipeDismissableNavController()
@@ -110,5 +139,23 @@ fun PreviewButtons() {
     val navController = rememberSwipeDismissableNavController()
     OwlTheme {
         Buttons(LocalContext.current,  navController)
+    }
+}
+
+@Composable
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
+fun PreviewAlarm() {
+    val navController = rememberSwipeDismissableNavController()
+    OwlTheme {
+        Alarm(currentHeartRate = "42", LocalContext.current,  navController)
+    }
+}
+
+@Composable
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
+fun PreviewNoAlarm() {
+    val navController = rememberSwipeDismissableNavController()
+    OwlTheme {
+        NoAlarm(currentHeartRate = "42", LocalContext.current,  navController)
     }
 }
