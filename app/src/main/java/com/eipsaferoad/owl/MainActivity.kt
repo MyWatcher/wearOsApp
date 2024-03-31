@@ -8,7 +8,6 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,11 +16,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
@@ -31,17 +29,15 @@ import androidx.navigation.NavHostController
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
-import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.heartRate.HeartRateService
-import com.eipsaferoad.owl.presentation.ComposableFun
 import com.eipsaferoad.owl.presentation.PagesEnum
+import com.eipsaferoad.owl.presentation.alarm.Alarm
 import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.settings.Settings
@@ -92,7 +88,7 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(this, bpm.value, url.value) {token -> accessToken.value = token }
+            WearApp(this, bpm.value, url.value) { token -> accessToken.value = token }
         }
     }
 
@@ -218,7 +214,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
     OwlTheme {
         SwipeDismissableNavHost(
             navController = navController,
-            startDestination = "login"
+            startDestination = PagesEnum.LOGIN.value
         ) {
             composable(PagesEnum.HOME.value) {
                 Box(
@@ -228,7 +224,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, navController)
+                    Home(currentHeartRate, context, navController)
                 }
             }
             composable(PagesEnum.LOGIN.value) {
@@ -261,7 +257,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(context, navController)
+                    Alarm(currentHeartRate, context, navController)
                 }
             }
         }
@@ -271,5 +267,5 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    /*WearApp(, "Preview Android", "") {}*/
+    WearApp(LocalContext.current , "42", "", {})
 }
