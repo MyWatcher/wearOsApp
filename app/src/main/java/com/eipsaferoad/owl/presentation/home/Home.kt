@@ -1,28 +1,57 @@
 package com.eipsaferoad.owl.presentation.home
 
 import android.content.Context
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.ScrollingView
@@ -37,11 +66,11 @@ import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
-fun Home(currentHeartRate: String, context: Context, navController: NavHostController) {
-    if (currentHeartRate.toInt() < 50 && currentHeartRate.toInt() != 0) {
+fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController) {
+    if (currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
         Alarm(currentHeartRate, context, navController)
     } else {
-        NoAlarm(currentHeartRate, context, navController)
+        NoAlarm(currentHeartRate.value, context, navController)
     }
 }
 
@@ -124,24 +153,78 @@ fun Buttons(context: Context, navController: NavHostController) {
 }
 
 @Composable
-fun Alarm(currentHeartRate: String, context: Context, navController: NavHostController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun CircularColumn(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(5.dp, MaterialTheme.colorScheme.secondary, CircleShape)
+            .clip(CircleShape),
+        contentColor = MaterialTheme.colorScheme.primary
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun Alarm(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController) {
+    CircularColumn {
+        Column(
+            modifier = Modifier
+                .padding(30.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.error,
+                    text = currentHeartRate.value,
+                    fontSize = 20.sp
+                )
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    text = "SOS",
+                    fontSize = 30.sp
+                )
+                Button(
+                    onClick = {
+                        currentHeartRate.value = "100"
+                    }
+                ) {
+                    CircleIcon(icon = Icons.Rounded.Clear, tint = MaterialTheme.colorScheme.surface)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CircleIcon(icon: ImageVector, tint: Color) {
+    Box(
+        modifier = Modifier
+            .size(50.dp)
+            .background(color = MaterialTheme.colorScheme.secondary, shape = CircleShape) // Background circle
     ) {
         Icon(
-            imageVector = Icons.Rounded.Favorite,
-            contentDescription = "Favorite Icon",
-            tint = Color.Red
-        )
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            text = currentHeartRate,
-            fontSize = 40.sp
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(100.dp),
+            tint = tint,
+            imageVector = icon,
+            contentDescription = "Icon description"
         )
     }
 }
@@ -150,9 +233,9 @@ fun Alarm(currentHeartRate: String, context: Context, navController: NavHostCont
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 fun PreviewHome() {
     val navController = rememberSwipeDismissableNavController()
-    OwlTheme {
+    /*OwlTheme {
             Home(currentHeartRate = "42", LocalContext.current,  navController)
-    }
+    }*/
 }
 
 @Composable
@@ -168,9 +251,9 @@ fun PreviewButtons() {
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 fun PreviewAlarm() {
     val navController = rememberSwipeDismissableNavController()
-    OwlTheme {
-        Alarm(currentHeartRate = "42", LocalContext.current,  navController)
-    }
+    /*OwlTheme {
+        Alarm(currentHeartRate = bpm, LocalContext.current,  navController)
+    }*/
 }
 
 @Composable
