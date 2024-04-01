@@ -53,11 +53,10 @@ import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
-fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController) {
-    if (currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
+fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, isAlarmActivated: Boolean) {
+    if (isAlarmActivated && currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
         Alarm(currentHeartRate)
     } else {
-        /*Alarm(currentHeartRate)*/
         NoAlarm(currentHeartRate.value, context, navController)
     }
 }
@@ -173,7 +172,7 @@ fun MultiColorBorderCircularColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .border(
-                    width = 5.dp,
+                    width = 7.dp,
                     brush = borderBrushMultiColor(borderColors),
                     shape = CircleShape
                 )
@@ -272,7 +271,7 @@ fun PreviewHome() {
     val bpm: MutableState<String> = mutableStateOf("0")
     val navController = rememberSwipeDismissableNavController()
     OwlTheme {
-            Home(bpm, LocalContext.current,  navController)
+            Home(bpm, LocalContext.current,  navController, true)
     }
 }
 
