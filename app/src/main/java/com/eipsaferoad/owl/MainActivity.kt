@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity(),
     CapabilityClient.OnCapabilityChangedListener {
 
     private var bpm: MutableState<String> = mutableStateOf("0")
+    private var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(this, bpm.value, url.value) { token -> accessToken.value = token }
+            WearApp(this, bpm, isAlarmActivated, url.value) { token -> accessToken.value = token }
         }
     }
 
@@ -203,7 +204,7 @@ fun login(apiUrl: String, email: String, password: String, navController: NavHos
 }
 
 @Composable
-fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAccessToken: (token: String) -> Unit) {
+fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmActivated: MutableState<Boolean>, apiUrl: String, setAccessToken: (token: String) -> Unit) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
@@ -224,7 +225,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController)
+                    Home(currentHeartRate, context, navController, isAlarmActivated.value)
                 }
             }
             composable(PagesEnum.LOGIN.value) {
@@ -257,7 +258,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Alarm(currentHeartRate, context, navController)
+                    Alarm(currentHeartRate.value, context, navController)
                 }
             }
         }
@@ -267,5 +268,7 @@ fun WearApp(context: Context, currentHeartRate: String, apiUrl: String, setAcces
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    WearApp(LocalContext.current , "42", "", {})
+    var bpm: MutableState<String> = mutableStateOf("0")
+    var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
+    WearApp(LocalContext.current , bpm, isAlarmActivated, "", {})
 }
