@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -196,7 +197,6 @@ fun Alarm(currentHeartRate: MutableState<String>) {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Background element
         MultiColorBorderCircularColumn(
             borderColors = listOf(
                 MaterialTheme.colorScheme.secondary,
@@ -236,6 +236,9 @@ fun Alarm(currentHeartRate: MutableState<String>) {
                     fontSize = 30.sp
                 )
                 Button(
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = MaterialTheme.colorScheme.secondary,
+                    ),
                     onClick = {
                         currentHeartRate.value = "100"
                     }
