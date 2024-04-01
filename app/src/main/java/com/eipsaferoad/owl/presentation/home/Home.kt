@@ -1,13 +1,17 @@
 package com.eipsaferoad.owl.presentation.home
 
 import android.content.Context
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationConstants
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.repeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,21 +33,26 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
@@ -70,7 +79,8 @@ fun Home(currentHeartRate: MutableState<String>, context: Context, navController
     if (currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
         Alarm(currentHeartRate, context, navController)
     } else {
-        NoAlarm(currentHeartRate.value, context, navController)
+        Alarm(currentHeartRate, context, navController)
+        /*NoAlarm(currentHeartRate.value, context, navController)*/
     }
 }
 
@@ -166,8 +176,65 @@ fun CircularColumn(content: @Composable () -> Unit) {
 }
 
 @Composable
+fun MultiColorBorderCircularColumn(
+    borderColors: List<Color>,
+    content: @Composable () -> Unit
+) {
+    val transition = rememberInfiniteTransition()
+
+    val rotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 5000),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .border(
+                width = 5.dp,
+                color = Color.Transparent,
+                shape = CircleShape
+            )
+            .graphicsLayer(
+                rotationZ = rotation
+            ),
+        contentColor = Color.White
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(
+                    width = 5.dp,
+                    brush = BorderBrushMultiColor(borderColors),
+                    shape = CircleShape
+                )
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun BorderBrushMultiColor(colors: List<Color>): Brush {
+    return Brush.linearGradient(
+        colors = colors,
+    )
+}
+
+
+@Composable
 fun Alarm(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController) {
-    CircularColumn {
+    MultiColorBorderCircularColumn(
+        borderColors = listOf(
+            MaterialTheme.colorScheme.secondary,
+            Color.Transparent,
+            MaterialTheme.colorScheme.secondary,
+        )
+    ) {
         Column(
             modifier = Modifier
                 .padding(30.dp)
