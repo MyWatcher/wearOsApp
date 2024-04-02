@@ -36,6 +36,8 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.heartRate.HeartRateService
+import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.alarm.Alarm
 import com.eipsaferoad.owl.presentation.home.Home
@@ -61,7 +63,7 @@ class MainActivity : ComponentActivity(),
     CapabilityClient.OnCapabilityChangedListener {
 
     private var bpm: MutableState<String> = mutableStateOf("0")
-    private var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
+    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
@@ -89,7 +91,7 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
         setContent {
-            WearApp(this, bpm, isAlarmActivated, url.value) { token -> accessToken.value = token }
+            WearApp(this, bpm, alarms, url.value) { token -> accessToken.value = token }
         }
     }
 
@@ -204,7 +206,7 @@ fun login(apiUrl: String, email: String, password: String, navController: NavHos
 }
 
 @Composable
-fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmActivated: MutableState<Boolean>, apiUrl: String, setAccessToken: (token: String) -> Unit) {
+fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
@@ -225,7 +227,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, isAlarmActivated.value)
+                    Home(currentHeartRate, context, navController, alarms.value.isAlarmActivate)
                 }
             }
             composable(PagesEnum.LOGIN.value) {
@@ -247,7 +249,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(context, navController)
+                    Settings(context, navController, alarms)
                 }
             }
             composable(PagesEnum.ALARM.value) {
@@ -269,6 +271,6 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
 @Composable
 fun DefaultPreview() {
     var bpm: MutableState<String> = mutableStateOf("0")
-    var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
-    WearApp(LocalContext.current , bpm, isAlarmActivated, "", {})
+    var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
+    WearApp(LocalContext.current , bpm, alarms, "", {})
 }
