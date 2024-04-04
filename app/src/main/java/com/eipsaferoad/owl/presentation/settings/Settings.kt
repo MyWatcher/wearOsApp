@@ -1,6 +1,9 @@
 package com.eipsaferoad.owl.presentation.settings
 
 import android.content.Context
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,18 +36,17 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.models.Alarm
-import com.eipsaferoad.owl.models.AlarmType
-import com.eipsaferoad.owl.presentation.theme.OwlTheme
 
 @Composable
-fun Settings(context: Context, navController: NavHostController, alarms: MutableState<Alarm>) {
+fun Settings(context: Context, navController: NavHostController, alarms: MutableState<Alarm>, mVibrator: Vibrator, vibrationEffectSingle : VibrationEffect) {
     var isAlarmActivate by remember { mutableStateOf(false) }
     var isSoundActivate by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(false) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
+    var soundVal by remember { mutableStateOf(0.0f) }
+    var vibrationVal by remember { mutableStateOf(0.0f) }
 
     LazyColumn(
         modifier = Modifier
@@ -58,7 +59,9 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
     ) {
         item {
             Button(
-                modifier = Modifier.width(200.dp).height(40.dp),
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(40.dp),
                 shape = RoundedCornerShape(10),
                 colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
                 onClick = { alarms.value.isAlarmActivate = !alarms.value.isAlarmActivate }
@@ -139,7 +142,17 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "-")
+                            Text(
+                                text = "-",
+                                modifier = Modifier
+                                    .clickable {
+                                        alarms.value.vibration.updateAlarm(false)
+                                        if (vibrationVal > alarms.value.vibration.min.toFloat()) {
+                                            vibrationVal -= 1
+                                        }
+                                        mVibrator.vibrate(vibrationEffectSingle)
+                                    }
+                            )
                             Box(
                                 modifier = Modifier
                                     .width(150.dp)
@@ -147,13 +160,23 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
                                     .clip(RoundedCornerShape(8.dp))
                             ) {
                                 LinearProgressIndicator(
-                                    progress = alarms.value.vibration.actual / (alarms.value.vibration.max - alarms.value.vibration.min),
+                                    progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
                                     modifier = Modifier
                                         .height(5.dp),
                                     color = MaterialTheme.colorScheme.secondary
                                 )
                             }
-                            Text(text = "+")
+                            Text(
+                                text = "+",
+                                modifier = Modifier
+                                    .clickable {
+                                        alarms.value.vibration.updateAlarm()
+                                        if (vibrationVal < alarms.value.vibration.max.toFloat()) {
+                                            vibrationVal += 1
+                                        }
+                                        mVibrator.vibrate(vibrationEffectSingle)
+                                    }
+                            )
                         }
                     }
                 }
@@ -212,7 +235,14 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(text = "-")
+                            Text(
+                                text = "-",
+                                modifier = Modifier.clickable {
+                                    if (soundVal > alarms.value.sound.min) {
+                                        soundVal -= 10
+                                    }
+                                }
+                            )
                             Box(
                                 modifier = Modifier
                                     .width(150.dp)
@@ -220,13 +250,22 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
                                     .clip(RoundedCornerShape(8.dp))
                             ) {
                                 LinearProgressIndicator(
-                                    progress = alarms.value.sound.actual / (alarms.value.sound.max - alarms.value.sound.min),
+                                    progress = soundVal / (alarms.value.sound.max - alarms.value.sound.min),
                                     modifier = Modifier
                                         .height(5.dp),
                                     color = MaterialTheme.colorScheme.secondary
                                 )
                             }
-                            Text(text = "+")
+                            Text(
+                                text = "+",
+                                modifier = Modifier
+                                    .clickable {
+                                        if (soundVal < alarms.value.sound.max.toFloat()) {
+                                            alarms.value.sound.actual += 10
+                                            soundVal += 10
+                                        }
+                                    }
+                            )
                         }
                     }
                 }
@@ -239,9 +278,9 @@ fun Settings(context: Context, navController: NavHostController, alarms: Mutable
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 fun PreviewSettings() {
-    val navController = rememberSwipeDismissableNavController()
-    var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
-    OwlTheme {
+    /*val navController = rememberSwipeDismissableNavController()
+    var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))*/
+    /*OwlTheme {
         Settings(LocalContext.current, navController = navController, alarms)
-    }
+    }*/
 }
