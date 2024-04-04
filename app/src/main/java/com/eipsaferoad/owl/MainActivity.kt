@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity(),
     CapabilityClient.OnCapabilityChangedListener {
 
     private lateinit var mVibrator: Vibrator
-    private lateinit var vibrationEffectSingle : VibrationEffect
+    private lateinit var vibrationEffectSingle: VibrationEffect
     private var bpm: MutableState<String> = mutableStateOf("0")
     private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), AlarmType(100, 0), false))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
@@ -184,7 +184,7 @@ class MainActivity : ComponentActivity(),
             } else {
                 mVibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
             }
-            vibrationEffectSingle = VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE)
+            vibrationEffectSingle = VibrationEffect.createOneShot(500, VibrationEffect.EFFECT_HEAVY_CLICK)
         }
     }
 
@@ -198,7 +198,7 @@ class MainActivity : ComponentActivity(),
                     .add("heartRate", bpm.value)
                     .build()
                 val headers = Headers.Builder()
-                    .add("Authorization", "Bearer ${accessToken.value}")  // Replace "coucou" with your actual token
+                    .add("Authorization", "Bearer ${accessToken.value}")
                     .build()
                 Request.makeRequest("${url.value}/api/heart-rate", headers, formBody) {}
             }
@@ -229,15 +229,13 @@ fun login(apiUrl: String, email: String, password: String, navController: NavHos
 }
 
 @Composable
-fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle : VibrationEffect) {
+fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
     if (email != null && password != null) {
         login(apiUrl = apiUrl, email = email, password = password, navController , setAccessToken)
     }
-
-    mVibrator.vibrate(vibrationEffectSingle)
 
     OwlTheme {
         SwipeDismissableNavHost(
@@ -274,7 +272,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(context, navController, alarms, mVibrator, vibrationEffectSingle)
+                    Settings(alarms, mVibrator)
                 }
             }
             composable(PagesEnum.ALARM.value) {
