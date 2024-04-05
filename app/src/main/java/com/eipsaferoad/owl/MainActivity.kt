@@ -7,10 +7,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,13 +24,11 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.NavHostController
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
@@ -35,7 +38,11 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.api.Request
+import com.eipsaferoad.owl.core.Authentication
 import com.eipsaferoad.owl.heartRate.HeartRateService
+import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.SoundAlarm
+import com.eipsaferoad.owl.models.VibrationAlarm
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.alarm.Alarm
 import com.eipsaferoad.owl.presentation.home.Home
@@ -60,8 +67,10 @@ class MainActivity : ComponentActivity(),
     MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener {
 
+    private lateinit var mVibrator: Vibrator
+    private lateinit var vibrationEffectSingle: VibrationEffect
     private var bpm: MutableState<String> = mutableStateOf("0")
-    private var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
+    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
@@ -77,19 +86,23 @@ class MainActivity : ComponentActivity(),
     }
     private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
 
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        val filter = IntentFilter()
         lifecycle.addObserver(ambientObserver)
         activityContext = this
-        checkPermission(android.Manifest.permission.BODY_SENSORS, 100);
-        val filter = IntentFilter()
+        checkPermission(android.Manifest.permission.BODY_SENSORS, 100)
+        checkPermission(android.Manifest.permission.VIBRATE, 100);
         filter.addAction("updateHR")
         registerReceiver(broadcastReceiver, filter)
         setTheme(android.R.style.Theme_DeviceDefault)
+        initVibration()
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+
         setContent {
-            WearApp(this, bpm, isAlarmActivated, url.value) { token -> accessToken.value = token }
+            WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle)
         }
     }
 
@@ -163,6 +176,18 @@ class MainActivity : ComponentActivity(),
         }
     }
 
+    private fun initVibration() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.VIBRATE) == PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                mVibrator = vibratorManager.getVibrator(vibratorManager.vibratorIds[0])
+            } else {
+                mVibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+            }
+            vibrationEffectSingle = VibrationEffect.createOneShot(500, VibrationEffect.EFFECT_HEAVY_CLICK)
+        }
+    }
+
     private var broadcastReceiver = object : BroadcastReceiver() {
         @SuppressLint("SetTextI18n")
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -173,7 +198,7 @@ class MainActivity : ComponentActivity(),
                     .add("heartRate", bpm.value)
                     .build()
                 val headers = Headers.Builder()
-                    .add("Authorization", "Bearer ${accessToken.value}")  // Replace "coucou" with your actual token
+                    .add("Authorization", "Bearer ${accessToken.value}")
                     .build()
                 Request.makeRequest("${url.value}/api/heart-rate", headers, formBody) {}
             }
@@ -181,35 +206,13 @@ class MainActivity : ComponentActivity(),
     }
 }
 
-fun login(apiUrl: String, email: String, password: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
-    val headers = Headers.Builder()
-        .build()
-    val formBody = FormBody.Builder()
-        .add("email", email)
-        .add("password", password)
-        .build()
-    Request.makeRequest(
-        "$apiUrl/api/auth/login",
-        headers,
-        formBody
-    ) {
-            dto ->
-        run {
-            val data = dto.getJSONObject("data")
-
-            setAccessToken(data.getString("token"))
-            navController.navigate(PagesEnum.HOME.value)
-        }
-    }
-}
-
 @Composable
-fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmActivated: MutableState<Boolean>, apiUrl: String, setAccessToken: (token: String) -> Unit) {
+fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
     if (email != null && password != null) {
-        login(apiUrl = apiUrl, email = email, password = password, navController , setAccessToken)
+        Authentication.login(context, apiUrl = apiUrl, email = email, password = password, navController =  navController , setAccessToken =  setAccessToken)
     }
 
     OwlTheme {
@@ -225,7 +228,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, isAlarmActivated.value)
+                    Home(currentHeartRate, context, navController, alarms.value.isAlarmActivate)
                 }
             }
             composable(PagesEnum.LOGIN.value) {
@@ -247,7 +250,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(context, navController)
+                    Settings(context, alarms, mVibrator)
                 }
             }
             composable(PagesEnum.ALARM.value) {
@@ -268,7 +271,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, isAlarmAct
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 @Composable
 fun DefaultPreview() {
-    var bpm: MutableState<String> = mutableStateOf("0")
-    var isAlarmActivated: MutableState<Boolean> = mutableStateOf(true)
-    WearApp(LocalContext.current , bpm, isAlarmActivated, "", {})
+    /*var bpm: MutableState<String> = mutableStateOf("0")
+    var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))*/
+    /*WearApp(LocalContext.current , bpm, alarms, "", {})*/
 }

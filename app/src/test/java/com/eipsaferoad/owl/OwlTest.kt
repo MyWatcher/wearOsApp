@@ -1,5 +1,7 @@
 package com.eipsaferoad.owl
 
+import android.os.VibrationEffect
+import com.eipsaferoad.owl.models.VibrationAlarm
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -16,5 +18,45 @@ class OwlTest {
 
         // Assert
         assertEquals(2, sum)
+    }
+
+    @Test
+    fun testVibrationAlarm() {
+        val alarm = VibrationAlarm(3, 0)
+        assertEquals(alarm.max, 3)
+        assertEquals(alarm.min, 0)
+        assertEquals(alarm.actual, 0.0f)
+        var res = alarm.updateAlarm()
+        assertEquals(res, VibrationEffect.EFFECT_HEAVY_CLICK)
+        assertEquals(alarm.actual, 1.0f)
+        res = alarm.updateAlarm(false)
+        assertEquals(res, VibrationEffect.EFFECT_TICK)
+        assertEquals(alarm.actual, 0.0f)
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        alarm.updateAlarm()
+        res = alarm.updateAlarm()
+        assertEquals(res, VibrationEffect.DEFAULT_AMPLITUDE)
+
     }
 }
