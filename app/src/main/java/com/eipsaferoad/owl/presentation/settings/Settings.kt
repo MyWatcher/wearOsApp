@@ -1,7 +1,12 @@
 package com.eipsaferoad.owl.presentation.settings
 
+import android.content.Context
+import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.activity.ComponentActivity
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,18 +31,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
+import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.AlarmType
+import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.soundPlayer
 
 @Composable
-fun Settings(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
 
     LazyColumn(
         modifier = Modifier
@@ -48,7 +59,7 @@ fun Settings(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     ) {
         item { AlarmButton(alarms) }
         item { VibrationButton(alarms, mVibrator) }
-        item { SoundButton(alarms) }
+        item { SoundButton(alarms, context) }
     }
 }
 
@@ -92,8 +103,8 @@ fun AlarmButton(alarms: MutableState<Alarm>) {
 fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
-    var isVibrationActivate by remember { mutableStateOf(false) }
-    var vibrationVal by remember { mutableStateOf(0.0f) }
+    var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
+    var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
     }
@@ -192,11 +203,11 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
 }
 
 @Composable
-fun SoundButton(alarms: MutableState<Alarm>) {
-    var isSoundActivate by remember { mutableStateOf(false) }
+fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
+    var isSoundActivate by remember { mutableStateOf(alarms.value.sound.isActivate) }
+    var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
-    var soundVal by remember { mutableStateOf(0.0f) }
 
     Button(
         modifier = Modifier
@@ -253,9 +264,11 @@ fun SoundButton(alarms: MutableState<Alarm>) {
                     Text(
                         text = "-",
                         modifier = Modifier.clickable {
+                            alarms.value.sound.updateAlarm(false)
                             if (soundVal > alarms.value.sound.min) {
-                                soundVal -= 10
+                                soundVal -= 0.2f
                             }
+                            soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
                         }
                     )
                     Box(
@@ -275,10 +288,11 @@ fun SoundButton(alarms: MutableState<Alarm>) {
                         text = "+",
                         modifier = Modifier
                             .clickable {
+                                alarms.value.sound.updateAlarm()
                                 if (soundVal < alarms.value.sound.max.toFloat()) {
-                                    alarms.value.sound.actual += 10
-                                    soundVal += 10
+                                    soundVal += 0.2f
                                 }
+                                soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
                             }
                     )
                 }
@@ -287,13 +301,16 @@ fun SoundButton(alarms: MutableState<Alarm>) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 fun PreviewSettings() {
-    /*val navController = rememberSwipeDismissableNavController()
     var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
+    val vibratorManager = getSystemService(ComponentActivity.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    var mVibrator: Vibrator = vibratorManager.getVibrator(vibratorManager.vibratorIds[0])
+
     OwlTheme {
-        Settings(LocalContext.current, navController = navController, alarms)
-    }*/
+        Settings(LocalContext.current, alarms = alarms, mVibrator = mVibrator)
+    }
 }

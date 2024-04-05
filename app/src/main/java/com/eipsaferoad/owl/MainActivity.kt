@@ -42,6 +42,7 @@ import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.heartRate.HeartRateService
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.AlarmType
+import com.eipsaferoad.owl.models.SoundAlarm
 import com.eipsaferoad.owl.models.VibrationAlarm
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.alarm.Alarm
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity(),
     private lateinit var mVibrator: Vibrator
     private lateinit var vibrationEffectSingle: VibrationEffect
     private var bpm: MutableState<String> = mutableStateOf("0")
-    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), AlarmType(100, 0), false))
+    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
@@ -272,7 +273,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(alarms, mVibrator)
+                    Settings(context, alarms, mVibrator)
                 }
             }
             composable(PagesEnum.ALARM.value) {
