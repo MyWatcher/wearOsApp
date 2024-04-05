@@ -1,9 +1,14 @@
 package com.eipsaferoad.owl.utils
 
 import android.content.Context
-import java.security.KeyStore
-import javax.crypto.Cipher
-import javax.crypto.spec.SecretKeySpec
+
+enum class KeysEnum(val value: String) {
+    ALARM_VIBRATION("alarm_vibration"),
+    ALARM_SOUND("alarm_sound"),
+    ALARM_ACTIVATE("alarm_activate"),
+    EMAIL("email"),
+    PASSWORD("password")
+}
 
 class LocalStorage {
 

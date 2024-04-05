@@ -49,8 +49,10 @@ import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.settings.Settings
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.KeysEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.ReadEnvVar
+import com.eipsaferoad.owl.utils.initAlarms
 import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataClient
@@ -100,6 +102,7 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         initVibration()
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        initAlarms(this, alarms)
 
         setContent {
             WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle)
@@ -209,8 +212,8 @@ class MainActivity : ComponentActivity(),
 @Composable
 fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
-    val email = LocalStorage.getData(context, "email");
-    val password = LocalStorage.getData(context, "password");
+    val email = LocalStorage.getData(context, KeysEnum.EMAIL.value);
+    val password = LocalStorage.getData(context, KeysEnum.PASSWORD.value);
     if (email != null && password != null) {
         Authentication.login(context, apiUrl = apiUrl, email = email, password = password, navController =  navController , setAccessToken =  setAccessToken)
     }
@@ -228,7 +231,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, alarms.value.isAlarmActivate)
+                    Home(currentHeartRate, context, navController, alarms)
                 }
             }
             composable(PagesEnum.LOGIN.value) {

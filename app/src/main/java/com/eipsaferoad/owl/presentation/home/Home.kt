@@ -48,13 +48,17 @@ import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.SoundAlarm
+import com.eipsaferoad.owl.models.VibrationAlarm
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.KeysEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
-fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, isAlarmActivated: Boolean) {
-    if (isAlarmActivated && currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
+fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, alarms: MutableState<Alarm>) {
+    if (alarms.value.isAlarmActivate && currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
         Alarm(currentHeartRate)
     } else {
         NoAlarm(currentHeartRate.value, context, navController)
@@ -126,8 +130,8 @@ fun Buttons(context: Context, navController: NavHostController) {
             shape = RoundedCornerShape(10),
             colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.tertiary),
             onClick = {
-                LocalStorage.deleteData(context, "email")
-                LocalStorage.deleteData(context, "password")
+                LocalStorage.deleteData(context, KeysEnum.EMAIL.value)
+                LocalStorage.deleteData(context, KeysEnum.PASSWORD.value)
                 navController.navigate(PagesEnum.LOGIN.value)
             }
         ) {
@@ -271,9 +275,10 @@ fun CircleIcon(icon: ImageVector, tint: Color) {
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 fun PreviewHome() {
     val bpm: MutableState<String> = mutableStateOf("0")
+    val alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false))
     val navController = rememberSwipeDismissableNavController()
     OwlTheme {
-            Home(bpm, LocalContext.current,  navController, true)
+            Home(bpm, LocalContext.current,  navController, alarms)
     }
 }
 
