@@ -17,36 +17,13 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.api.Request
+import com.eipsaferoad.owl.core.Authentication
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.LocalStorage
 import okhttp3.FormBody
 import okhttp3.Headers
-
-fun login(context: Context, apiUrl: String, email: String, password: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
-    val headers = Headers.Builder()
-        .build()
-    val formBody = FormBody.Builder()
-        .add("email", email)
-        .add("password", password)
-        .build()
-    Request.makeRequest(
-        "$apiUrl/api/auth/login",
-        headers,
-        formBody
-    ) {
-        dto ->
-        run {
-            val data = dto.getJSONObject("data")
-
-            setAccessToken(data.getString("token"))
-            LocalStorage.setData(context, "email", email)
-            LocalStorage.setData(context, "password", password)
-            navController.navigate(PagesEnum.HOME.value)
-        }
-    }
-}
 
 @Composable
 fun Login(context: Context, apiUrl: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
@@ -64,7 +41,7 @@ fun Login(context: Context, apiUrl: String, navController: NavHostController, se
                 .width(100.dp)
                 .padding(top = 10.dp),
             onClick = {
-                login(context = context, apiUrl = apiUrl, email = email.value, password = password.value, navController, setAccessToken)
+                Authentication.login(context = context, isNew = true, apiUrl = apiUrl, email = email.value, password = password.value, navController, setAccessToken)
             }
         ) {
             Text(text = "login")

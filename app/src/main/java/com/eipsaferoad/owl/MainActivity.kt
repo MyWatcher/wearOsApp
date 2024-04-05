@@ -29,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.navigation.NavHostController
 import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientModeSupport
 import androidx.wear.ambient.AmbientModeSupport.AmbientCallback
@@ -39,9 +38,9 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.api.Request
+import com.eipsaferoad.owl.core.Authentication
 import com.eipsaferoad.owl.heartRate.HeartRateService
 import com.eipsaferoad.owl.models.Alarm
-import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.models.SoundAlarm
 import com.eipsaferoad.owl.models.VibrationAlarm
 import com.eipsaferoad.owl.presentation.PagesEnum
@@ -207,35 +206,13 @@ class MainActivity : ComponentActivity(),
     }
 }
 
-fun login(apiUrl: String, email: String, password: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
-    val headers = Headers.Builder()
-        .build()
-    val formBody = FormBody.Builder()
-        .add("email", email)
-        .add("password", password)
-        .build()
-    Request.makeRequest(
-        "$apiUrl/api/auth/login",
-        headers,
-        formBody
-    ) {
-            dto ->
-        run {
-            val data = dto.getJSONObject("data")
-
-            setAccessToken(data.getString("token"))
-            navController.navigate(PagesEnum.HOME.value)
-        }
-    }
-}
-
 @Composable
 fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, "email");
     val password = LocalStorage.getData(context, "password");
     if (email != null && password != null) {
-        login(apiUrl = apiUrl, email = email, password = password, navController , setAccessToken)
+        Authentication.login(context, apiUrl = apiUrl, email = email, password = password, navController =  navController , setAccessToken =  setAccessToken)
     }
 
     OwlTheme {

@@ -306,11 +306,11 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Preview(device = Devices.WEAR_OS_SMALL_ROUND, showSystemUi = true)
 fun PreviewSettings() {
-    var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
+    /*var alarms: MutableState<Alarm> = mutableStateOf(Alarm(AlarmType(0, 100), AlarmType(0, 100), false))
     val vibratorManager = getSystemService(ComponentActivity.VIBRATOR_MANAGER_SERVICE) as VibratorManager
     var mVibrator: Vibrator = vibratorManager.getVibrator(vibratorManager.vibratorIds[0])
 
     OwlTheme {
         Settings(LocalContext.current, alarms = alarms, mVibrator = mVibrator)
-    }
+    }*/
 }
