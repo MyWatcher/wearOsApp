@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -22,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +48,8 @@ import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.EnvEnum
+import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.soundPlayer
 
 @Composable
@@ -57,15 +62,21 @@ fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator)
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { AlarmButton(alarms) }
-        item { VibrationButton(alarms, mVibrator) }
+        item { AlarmButton(context, alarms) }
+        item { VibrationButton(context, alarms, mVibrator) }
         item { SoundButton(alarms, context) }
     }
 }
 
 @Composable
-fun AlarmButton(alarms: MutableState<Alarm>) {
-    var isAlarmActivate by remember { mutableStateOf(false) }
+fun AlarmButton(context: Context, alarms: MutableState<Alarm>) {
+    var isAlarmActivate by remember { mutableStateOf(alarms.value.isAlarmActivate) }
+
+    DisposableEffect(isAlarmActivate) {
+        onDispose {
+            LocalStorage.setData(context, EnvEnum.ALARM.value, if (isAlarmActivate) "1" else "0")
+        }
+    }
 
     Button(
         modifier = Modifier
@@ -100,13 +111,17 @@ fun AlarmButton(alarms: MutableState<Alarm>) {
 }
 
 @Composable
-fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     var isVibrationSelected by remember { mutableStateOf(false) }
-    var isSoundSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
-    var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+    
+    DisposableEffect(isVibrationActivate) {
+        onDispose {
+            LocalStorage.setData(context, EnvEnum.VIBRATION_ALARM.value, if (isVibrationActivate) "1" else "0")
+        }
     }
 
     Button(
@@ -115,12 +130,7 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
             .height(if (isVibrationSelected) 80.dp else 40.dp),
         shape = RoundedCornerShape(10),
         colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
-        onClick = {
-            isVibrationSelected = !isVibrationSelected
-            if (isSoundSelected) {
-                isSoundSelected = false
-            }
-        }
+        onClick = {}
     ) {
         Column(
             modifier = Modifier
@@ -138,7 +148,6 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
                 Text(
                     text = "Vibration",
                 )
-                if (isVibrationSelected) {
                     Switch(
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color(0xFF00275B),
@@ -149,54 +158,11 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
                         checked = isVibrationActivate,
                         onCheckedChange = {
                             alarms.value.vibration.isActivate = it; isVibrationActivate = it
+                            if (it) {
+                                mVibrator.vibrate(vibrationEffectSingle)
+                            }
                         }
                     )
-                }
-            }
-            if (isVibrationSelected) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp, end = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "-",
-                        modifier = Modifier
-                            .clickable {
-                                vibrationEffectSingle = VibrationEffect.createOneShot(500, alarms.value.vibration.updateAlarm(false))
-                                if (vibrationVal > alarms.value.vibration.min.toFloat()) {
-                                    vibrationVal -= 1
-                                }
-                                mVibrator.vibrate(vibrationEffectSingle)
-                            }
-                    )
-                    Box(
-                        modifier = Modifier
-                            .width(150.dp)
-                            .height(5.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    ) {
-                        LinearProgressIndicator(
-                            progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
-                            modifier = Modifier
-                                .height(5.dp),
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Text(
-                        text = "+",
-                        modifier = Modifier
-                            .clickable {
-                                vibrationEffectSingle = VibrationEffect.createOneShot(500, alarms.value.vibration.updateAlarm())
-                                if (vibrationVal < alarms.value.vibration.max.toFloat()) {
-                                    vibrationVal += 1
-                                }
-                                mVibrator.vibrate(vibrationEffectSingle)
-                            }
-                    )
-                }
             }
         }
     }
@@ -208,6 +174,14 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
     var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
+
+    DisposableEffect(isSoundActivate, soundVal) {
+        onDispose {
+            var data = if (isSoundActivate) "1" else "0"
+            data += soundVal.toString()
+            LocalStorage.setData(context, EnvEnum.SOUND_ALARM.value, data)
+        }
+    }
 
     Button(
         modifier = Modifier
@@ -268,7 +242,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                             if (soundVal > alarms.value.sound.min) {
                                 soundVal -= 0.2f
                             }
-                            soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
+                            soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
                         }
                     )
                     Box(
@@ -292,7 +266,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                                 if (soundVal < alarms.value.sound.max.toFloat()) {
                                     soundVal += 0.2f
                                 }
-                                soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
+                                soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
                             }
                     )
                 }

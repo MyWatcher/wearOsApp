@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -49,6 +50,7 @@ import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.settings.Settings
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.ReadEnvVar
 import com.google.android.gms.wearable.CapabilityClient
@@ -100,6 +102,21 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         initVibration()
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        val alarm = LocalStorage.getData(this, EnvEnum.ALARM.value)
+        if (!alarm.isNullOrEmpty()) {
+            Log.d("PADOU", "${alarm == "1"}")
+            alarms.value.isAlarmActivate = alarm == "1";
+            Log.d("PADOU", "${alarms.value.isAlarmActivate}")
+        }
+        val vibration = LocalStorage.getData(this, EnvEnum.VIBRATION_ALARM.value)
+        if (!vibration.isNullOrEmpty()) {
+            alarms.value.vibration.isActivate = vibration == "1";
+        }
+        val sound = LocalStorage.getData(this, EnvEnum.SOUND_ALARM.value)
+        if (!sound.isNullOrEmpty()) {
+            alarms.value.sound.isActivate = sound[0] == '1';
+            alarms.value.sound.actual = sound.substring(1).toFloat()
+        }
 
         setContent {
             WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle)
@@ -209,8 +226,8 @@ class MainActivity : ComponentActivity(),
 @Composable
 fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
-    val email = LocalStorage.getData(context, "email");
-    val password = LocalStorage.getData(context, "password");
+    val email = LocalStorage.getData(context, EnvEnum.EMAIL.value);
+    val password = LocalStorage.getData(context, EnvEnum.PASSWORD.value);
     if (email != null && password != null) {
         Authentication.login(context, apiUrl = apiUrl, email = email, password = password, navController =  navController , setAccessToken =  setAccessToken)
     }
@@ -228,7 +245,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, alarms.value.isAlarmActivate)
+                    Home(currentHeartRate, context, navController, alarms, mVibrator)
                 }
             }
             composable(PagesEnum.LOGIN.value) {

@@ -5,6 +5,14 @@ import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
+enum class EnvEnum(val value: String) {
+    EMAIL("email"),
+    PASSWORD("password"),
+    ALARM("alarm"),
+    VIBRATION_ALARM("vibration"),
+    SOUND_ALARM("sound"),
+}
+
 class LocalStorage {
 
     companion object {
