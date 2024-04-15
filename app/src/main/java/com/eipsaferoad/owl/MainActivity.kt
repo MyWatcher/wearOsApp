@@ -245,7 +245,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, alarms.value.isAlarmActivate)
+                    Home(currentHeartRate, context, navController, alarms, mVibrator)
                 }
             }
             composable(PagesEnum.LOGIN.value) {

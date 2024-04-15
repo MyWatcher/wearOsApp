@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Switch
@@ -43,6 +46,8 @@ import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.AlarmType
+import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.soundPlayer
