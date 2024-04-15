@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.navigation.NavHostController
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.presentation.PagesEnum
+import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -35,8 +36,8 @@ class Authentication {
 
                     setAccessToken(data.getString("token"))
                     if (isNew) {
-                        LocalStorage.setData(context, "email", email)
-                        LocalStorage.setData(context, "password", password)
+                        LocalStorage.setData(context, EnvEnum.EMAIL.value, email)
+                        LocalStorage.setData(context, EnvEnum.PASSWORD.value, password)
                     }
                     navController.navigate(PagesEnum.HOME.value)
                 }

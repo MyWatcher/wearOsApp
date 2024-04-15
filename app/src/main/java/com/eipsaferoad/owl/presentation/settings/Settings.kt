@@ -4,8 +4,6 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
-import android.os.VibratorManager
-import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,11 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Switch
@@ -43,8 +39,6 @@ import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.models.Alarm
-import com.eipsaferoad.owl.models.AlarmType
-import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.soundPlayer
 
 @Composable
@@ -102,9 +96,7 @@ fun AlarmButton(alarms: MutableState<Alarm>) {
 @Composable
 fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     var isVibrationSelected by remember { mutableStateOf(false) }
-    var isSoundSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
-    var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
     }
@@ -115,12 +107,7 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
             .height(if (isVibrationSelected) 80.dp else 40.dp),
         shape = RoundedCornerShape(10),
         colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
-        onClick = {
-            isVibrationSelected = !isVibrationSelected
-            if (isSoundSelected) {
-                isSoundSelected = false
-            }
-        }
+        onClick = {}
     ) {
         Column(
             modifier = Modifier
@@ -138,7 +125,6 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
                 Text(
                     text = "Vibration",
                 )
-                if (isVibrationSelected) {
                     Switch(
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color(0xFF00275B),
@@ -149,54 +135,11 @@ fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
                         checked = isVibrationActivate,
                         onCheckedChange = {
                             alarms.value.vibration.isActivate = it; isVibrationActivate = it
+                            if (it) {
+                                mVibrator.vibrate(vibrationEffectSingle)
+                            }
                         }
                     )
-                }
-            }
-            if (isVibrationSelected) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp, end = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "-",
-                        modifier = Modifier
-                            .clickable {
-                                vibrationEffectSingle = VibrationEffect.createOneShot(500, alarms.value.vibration.updateAlarm(false))
-                                if (vibrationVal > alarms.value.vibration.min.toFloat()) {
-                                    vibrationVal -= 1
-                                }
-                                mVibrator.vibrate(vibrationEffectSingle)
-                            }
-                    )
-                    Box(
-                        modifier = Modifier
-                            .width(150.dp)
-                            .height(5.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                    ) {
-                        LinearProgressIndicator(
-                            progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
-                            modifier = Modifier
-                                .height(5.dp),
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                    Text(
-                        text = "+",
-                        modifier = Modifier
-                            .clickable {
-                                vibrationEffectSingle = VibrationEffect.createOneShot(500, alarms.value.vibration.updateAlarm())
-                                if (vibrationVal < alarms.value.vibration.max.toFloat()) {
-                                    vibrationVal += 1
-                                }
-                                mVibrator.vibrate(vibrationEffectSingle)
-                            }
-                    )
-                }
             }
         }
     }

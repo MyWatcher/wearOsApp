@@ -9,8 +9,8 @@ class VibrationAlarm(
     isActivate: Boolean = false,
 ) : AlarmType(max, min, actual, isActivate) {
     private val vibrationLevels: Array<Int> = arrayOf(
-        VibrationEffect.EFFECT_TICK,
-        VibrationEffect.EFFECT_HEAVY_CLICK,
+        VibrationEffect.DEFAULT_AMPLITUDE,
+        VibrationEffect.DEFAULT_AMPLITUDE,
         VibrationEffect.DEFAULT_AMPLITUDE,
         VibrationEffect.DEFAULT_AMPLITUDE
     )

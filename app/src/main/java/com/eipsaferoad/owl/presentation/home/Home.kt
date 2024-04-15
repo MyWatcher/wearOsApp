@@ -50,6 +50,7 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 
 @Composable
@@ -126,8 +127,8 @@ fun Buttons(context: Context, navController: NavHostController) {
             shape = RoundedCornerShape(10),
             colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.tertiary),
             onClick = {
-                LocalStorage.deleteData(context, "email")
-                LocalStorage.deleteData(context, "password")
+                LocalStorage.deleteData(context, EnvEnum.EMAIL.value)
+                LocalStorage.deleteData(context, EnvEnum.PASSWORD.value)
                 navController.navigate(PagesEnum.LOGIN.value)
             }
         ) {

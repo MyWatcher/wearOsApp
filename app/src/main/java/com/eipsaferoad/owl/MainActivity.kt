@@ -49,6 +49,7 @@ import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.settings.Settings
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
+import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.ReadEnvVar
 import com.google.android.gms.wearable.CapabilityClient
@@ -209,8 +210,8 @@ class MainActivity : ComponentActivity(),
 @Composable
 fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect) {
     val navController = rememberSwipeDismissableNavController()
-    val email = LocalStorage.getData(context, "email");
-    val password = LocalStorage.getData(context, "password");
+    val email = LocalStorage.getData(context, EnvEnum.EMAIL.value);
+    val password = LocalStorage.getData(context, EnvEnum.PASSWORD.value);
     if (email != null && password != null) {
         Authentication.login(context, apiUrl = apiUrl, email = email, password = password, navController =  navController , setAccessToken =  setAccessToken)
     }
