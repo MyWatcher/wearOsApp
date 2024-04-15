@@ -268,7 +268,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                             if (soundVal > alarms.value.sound.min) {
                                 soundVal -= 0.2f
                             }
-                            soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
+                            soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
                         }
                     )
                     Box(
@@ -292,7 +292,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                                 if (soundVal < alarms.value.sound.max.toFloat()) {
                                     soundVal += 0.2f
                                 }
-                                soundPlayer(context, soundVal, fileId = R.raw.default_alarm)
+                                soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
                             }
                     )
                 }
