@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -101,6 +102,21 @@ class MainActivity : ComponentActivity(),
         setTheme(android.R.style.Theme_DeviceDefault)
         initVibration()
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
+        val alarm = LocalStorage.getData(this, EnvEnum.ALARM.value)
+        if (!alarm.isNullOrEmpty()) {
+            Log.d("PADOU", "${alarm == "1"}")
+            alarms.value.isAlarmActivate = alarm == "1";
+            Log.d("PADOU", "${alarms.value.isAlarmActivate}")
+        }
+        val vibration = LocalStorage.getData(this, EnvEnum.VIBRATION_ALARM.value)
+        if (!vibration.isNullOrEmpty()) {
+            alarms.value.vibration.isActivate = vibration == "1";
+        }
+        val sound = LocalStorage.getData(this, EnvEnum.SOUND_ALARM.value)
+        if (!sound.isNullOrEmpty()) {
+            alarms.value.sound.isActivate = sound[0] == '1';
+            alarms.value.sound.actual = sound.substring(1).toFloat()
+        }
 
         setContent {
             WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle)

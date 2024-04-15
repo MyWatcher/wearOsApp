@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,6 +43,8 @@ import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.utils.EnvEnum
+import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.soundPlayer
 
 @Composable
@@ -51,15 +57,21 @@ fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator)
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { AlarmButton(alarms) }
-        item { VibrationButton(alarms, mVibrator) }
+        item { AlarmButton(context, alarms) }
+        item { VibrationButton(context, alarms, mVibrator) }
         item { SoundButton(alarms, context) }
     }
 }
 
 @Composable
-fun AlarmButton(alarms: MutableState<Alarm>) {
-    var isAlarmActivate by remember { mutableStateOf(false) }
+fun AlarmButton(context: Context, alarms: MutableState<Alarm>) {
+    var isAlarmActivate by remember { mutableStateOf(alarms.value.isAlarmActivate) }
+
+    DisposableEffect(isAlarmActivate) {
+        onDispose {
+            LocalStorage.setData(context, EnvEnum.ALARM.value, if (isAlarmActivate) "1" else "0")
+        }
+    }
 
     Button(
         modifier = Modifier
@@ -94,11 +106,17 @@ fun AlarmButton(alarms: MutableState<Alarm>) {
 }
 
 @Composable
-fun VibrationButton(alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+    
+    DisposableEffect(isVibrationActivate) {
+        onDispose {
+            LocalStorage.setData(context, EnvEnum.VIBRATION_ALARM.value, if (isVibrationActivate) "1" else "0")
+        }
     }
 
     Button(
@@ -151,6 +169,14 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
     var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
+
+    DisposableEffect(isSoundActivate, soundVal) {
+        onDispose {
+            var data = if (isSoundActivate) "1" else "0"
+            data += soundVal.toString()
+            LocalStorage.setData(context, EnvEnum.SOUND_ALARM.value, data)
+        }
+    }
 
     Button(
         modifier = Modifier
