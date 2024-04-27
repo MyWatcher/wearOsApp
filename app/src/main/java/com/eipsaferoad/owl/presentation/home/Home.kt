@@ -66,7 +66,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     if (alarms.value.isAlarmActivate && currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
-        Alarm(currentHeartRate, alarms, mVibrator)
+        Alarm(context, currentHeartRate, alarms, mVibrator)
     } else {
         NoAlarm(currentHeartRate.value, context, navController)
     }
@@ -202,10 +202,7 @@ fun borderBrushMultiColor(colors: List<Color>): Brush {
 }
 
 @Composable
-fun Alarm(currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
-    if (alarms.value.isAlarmActivate && alarms.value.sound.isActivate) {
-        soundPlayer(LocalContext.current, alarms.value.sound.actual, fileId = R.raw.default_alarm, loop = true)
-    }
+fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
     }
@@ -217,6 +214,15 @@ fun Alarm(currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, m
                 mVibrator.vibrate(vibrationEffectSingle)
             }
             delay(2000)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        while(true) {
+            if (alarms.value.isAlarmActivate && alarms.value.sound.isActivate) {
+                soundPlayer(context, alarms.value.sound.actual, fileId = R.raw.alarm_test)
+            }
+            delay(15000)
         }
     }
 
