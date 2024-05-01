@@ -217,7 +217,7 @@ class MainActivity : ComponentActivity(),
                 val headers = Headers.Builder()
                     .add("Authorization", "Bearer ${accessToken.value}")
                     .build()
-                Request.makeRequest("${url.value}/api/heart-rate", headers, formBody) {}
+                Request.makeRequest("${url.value}/api/heart-rate", headers, formBody, Request.Companion.REQUEST_TYPE.POST) {}
             }
         }
     }

@@ -16,13 +16,41 @@ class Request {
 
     companion object {
 
-        private fun post(url: String, headers: Headers, body: FormBody): String {
+        public enum class REQUEST_TYPE() {
+            POST,
+            PUT,
+            GET,
+            DELETE
+        }
+
+        private fun post(url: String, headers: Headers, body: FormBody, requestType: REQUEST_TYPE): String {
             val client = OkHttpClient()
-            val request = Request.Builder()
-                .url(url)
-                .post(body)
-                .headers(headers)
-                .build()
+            var request: Request
+            if (requestType == REQUEST_TYPE.POST) {
+                request = Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .headers(headers)
+                    .build()
+            } else if (requestType == REQUEST_TYPE.GET) {
+                request = Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .headers(headers)
+                    .build()
+            } else if (requestType == REQUEST_TYPE.PUT) {
+                request = Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .headers(headers)
+                    .build()
+            } else {
+                request = Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .headers(headers)
+                    .build()
+            }
 
             try {
                 val response = client.newCall(request).execute()
@@ -35,11 +63,11 @@ class Request {
             }
         }
 
-        fun makeRequest(url: String, headers: Headers, body: FormBody, callback: (dto: JSONObject) -> Unit) {
+        fun makeRequest(url: String, headers: Headers, body: FormBody, requestType: REQUEST_TYPE, callback: (dto: JSONObject) -> Unit) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     val response = withContext(Dispatchers.IO) {
-                        post(url, headers, body)
+                        post(url, headers, body, requestType)
                     }
                     withContext(Dispatchers.Main) {
                         try {

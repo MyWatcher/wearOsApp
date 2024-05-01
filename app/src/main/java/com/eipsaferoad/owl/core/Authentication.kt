@@ -29,7 +29,8 @@ class Authentication {
             Request.makeRequest(
                 "$apiUrl/api/auth/login",
                 headers,
-                formBody
+                formBody,
+                Request.Companion.REQUEST_TYPE.POST
             ) { dto ->
                 run {
                     val data = dto.getJSONObject("data")
