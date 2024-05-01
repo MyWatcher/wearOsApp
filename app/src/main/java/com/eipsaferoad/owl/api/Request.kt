@@ -35,19 +35,18 @@ class Request {
             } else if (requestType == REQUEST_TYPE.GET) {
                 request = Request.Builder()
                     .url(url)
-                    .post(body)
                     .headers(headers)
                     .build()
             } else if (requestType == REQUEST_TYPE.PUT) {
                 request = Request.Builder()
                     .url(url)
-                    .post(body)
+                    .put(body)
                     .headers(headers)
                     .build()
             } else {
                 request = Request.Builder()
                     .url(url)
-                    .post(body)
+                    .delete(body)
                     .headers(headers)
                     .build()
             }
@@ -63,7 +62,7 @@ class Request {
             }
         }
 
-        fun makeRequest(url: String, headers: Headers, body: FormBody, requestType: REQUEST_TYPE, callback: (dto: JSONObject) -> Unit) {
+        fun makeRequest(url: String, headers: Headers, body: FormBody, requestType: REQUEST_TYPE, callback: (dto: String) -> Unit) {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
                     val response = withContext(Dispatchers.IO) {
@@ -71,9 +70,9 @@ class Request {
                     }
                     withContext(Dispatchers.Main) {
                         try {
-                            callback(JSONObject(response))
+                            callback(response)
                         } catch (e: JSONException) {
-                            Log.e("API CALL", "Error parsing JSON: $e")
+                            Log.e("API CALL", "Error with response data: $e")
                         }
                     }
                 } catch (e: Exception) {
