@@ -14,4 +14,13 @@ open class AlarmType(
         }
         return 0
     }
+
+    fun compress(): String {
+        return if (isActivate) "1$actual" else "0$actual"
+    }
+
+    fun decompress(compressStr: String) {
+        isActivate = (compressStr[0] == '1')
+        actual = compressStr.substring(1).toFloat()
+    }
 }

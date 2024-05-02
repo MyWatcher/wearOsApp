@@ -34,11 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Switch
@@ -50,6 +48,7 @@ import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.EnvEnum
+import com.eipsaferoad.owl.utils.KeysEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.soundPlayer
 import okhttp3.FormBody
@@ -58,7 +57,6 @@ import org.json.JSONObject
 
 @Composable
 fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
-
     LazyColumn(
         modifier = Modifier
             .padding(top = 40.dp, bottom = 40.dp)
