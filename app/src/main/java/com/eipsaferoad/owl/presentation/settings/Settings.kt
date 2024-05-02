@@ -45,15 +45,19 @@ import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
+import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.soundPlayer
+import okhttp3.FormBody
+import okhttp3.Headers
+import org.json.JSONObject
 
 @Composable
-fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
 
     LazyColumn(
         modifier = Modifier
@@ -62,14 +66,39 @@ fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator)
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { AlarmButton(context, alarms) }
-        item { VibrationButton(context, alarms, mVibrator) }
-        item { SoundButton(alarms, context) }
+        item { AlarmButton(context, alarms, apiUrl, accessToken) }
+        item { VibrationButton(context, alarms, mVibrator, apiUrl, accessToken) }
+        item { SoundButton(alarms, context, apiUrl, accessToken) }
     }
 }
 
+fun saveOnServer(apiUrl: String, accessToken: String?, alarms: Alarm) {
+    val headers = Headers.Builder()
+        .add("Authorization", "Bearer $accessToken")
+        .add("Accept", "application/json")
+        .build()
+
+    val jsonBody = JSONObject().apply {
+        put("isAlarmActivate", alarms.isAlarmActivate)
+        put("isVibrationActivate", alarms.vibration.isActivate)
+        put("vibrationLevel", alarms.vibration.actual.toInt())
+        put("isSoundActivate", alarms.sound.isActivate)
+        put("soundLevel", alarms.sound.actual.toInt())
+        put("music", alarms.music)
+        put("iconId", alarms.iconId)
+    }.toString()
+
+    Request.makeRequest(
+        "$apiUrl/api/alarmPreferences",
+        Request.Companion.REQUEST_TYPE.PUT,
+        {},
+        headers,
+        jsonBody,
+    )
+}
+
 @Composable
-fun AlarmButton(context: Context, alarms: MutableState<Alarm>) {
+fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, accessToken: String?) {
     var isAlarmActivate by remember { mutableStateOf(alarms.value.isAlarmActivate) }
 
     DisposableEffect(isAlarmActivate) {
@@ -104,6 +133,7 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>) {
                 checked = isAlarmActivate,
                 onCheckedChange = {
                     alarms.value.isAlarmActivate = it; isAlarmActivate = it
+                    saveOnServer(apiUrl, accessToken, alarms.value)
                 }
             )
         }
@@ -111,7 +141,7 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>) {
 }
 
 @Composable
-fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationEffectSingle by remember {
@@ -158,6 +188,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                         checked = isVibrationActivate,
                         onCheckedChange = {
                             alarms.value.vibration.isActivate = it; isVibrationActivate = it
+                            saveOnServer(apiUrl, accessToken, alarms.value)
                             if (it) {
                                 mVibrator.vibrate(vibrationEffectSingle)
                             }
@@ -169,7 +200,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
 }
 
 @Composable
-fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
+fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, accessToken: String?) {
     var isSoundActivate by remember { mutableStateOf(alarms.value.sound.isActivate) }
     var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
@@ -222,6 +253,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                         ),
                         checked = isSoundActivate,
                         onCheckedChange = {
+                            saveOnServer(apiUrl, accessToken, alarms.value)
                             alarms.value.sound.isActivate = it; isSoundActivate = it
                         }
                     )
@@ -239,6 +271,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                         text = "-",
                         modifier = Modifier.clickable {
                             alarms.value.sound.updateAlarm(false)
+                            saveOnServer(apiUrl, accessToken, alarms.value)
                             if (soundVal > alarms.value.sound.min) {
                                 soundVal -= 0.2f
                             }
@@ -263,6 +296,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context) {
                         modifier = Modifier
                             .clickable {
                                 alarms.value.sound.updateAlarm()
+                                saveOnServer(apiUrl, accessToken, alarms.value)
                                 if (soundVal < alarms.value.sound.max.toFloat()) {
                                     soundVal += 0.2f
                                 }

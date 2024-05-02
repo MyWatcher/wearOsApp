@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity(),
     private lateinit var mVibrator: Vibrator
     private lateinit var vibrationEffectSingle: VibrationEffect
     private var bpm: MutableState<String> = mutableStateOf("0")
-    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false))
+    private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false, "", 0))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
     private var activityContext: Context? = null
@@ -248,28 +248,11 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     alarms.value.isAlarmActivate = dataArray.getString("isAlarmActivate").equals("true")
                     alarms.value.vibration.isActivate = dataArray.getString("isVibrationActivate").equals("true")
                     alarms.value.sound.isActivate = dataArray.getString("isSoundActivate").equals("true")
+                    alarms.value.iconId = dataArray.getString("iconId").toInt()
+                    alarms.value.music = dataArray.getString("music")
                 }
             }
         }
-        // récupère access token puis fais API call pour récupérer les alarmes
-        // refait meme api call au lancement de l'alarme
-        // fait API call quand modifie l'alarme
-        /*val headers = Headers.Builder()
-            .build()
-        val formBody = FormBody.Builder()
-            .build()
-        Request.makeRequest(
-            "$apiUrl/api/alarmPreferences",
-            headers,
-            formBody,
-            Request.Companion.REQUEST_TYPE.GET
-        ) { dto ->
-            run {
-                val data = dto.getJSONObject("data")
-
-                Log.d("PADOU", data.toString())
-            }
-        }*/
     }
 
     OwlTheme {
@@ -307,7 +290,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Settings(context, alarms, mVibrator)
+                    Settings(context, alarms, mVibrator, apiUrl, accessToken.value )
                 }
             }
             composable(PagesEnum.ALARM.value) {

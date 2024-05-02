@@ -11,6 +11,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONException
 import org.json.JSONObject
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class Request {
 
@@ -77,6 +81,64 @@ class Request {
                     }
                 } catch (e: Exception) {
                     Log.e("API CALL", "Error api call in: $e")
+                }
+            }
+        }
+
+        private fun executeRequest(url: String, headers: Headers, body: String, requestType: REQUEST_TYPE): String {
+            val client = OkHttpClient()
+            val requestBody = body.toRequestBody("application/json".toMediaType())
+
+            val request = when (requestType) {
+                REQUEST_TYPE.POST -> Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .headers(headers)
+                    .build()
+                REQUEST_TYPE.PUT -> Request.Builder()
+                    .url(url)
+                    .put(requestBody)
+                    .headers(headers)
+                    .build()
+                REQUEST_TYPE.GET -> Request.Builder()
+                    .url(url)
+                    .get()
+                    .headers(headers)
+                    .build()
+                REQUEST_TYPE.DELETE -> Request.Builder()
+                    .url(url)
+                    .delete(requestBody)
+                    .headers(headers)
+                    .build()
+            }
+
+            try {
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    throw Exception("Error: Request failed with code ${response.code}")
+                }
+                return response.body!!.string()
+            } catch (e: Exception) {
+                throw e
+            }
+        }
+
+        fun makeRequest(url: String, requestType: REQUEST_TYPE, callback: (dto: String) -> Unit, headers: Headers, jsonBody: String) {
+
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    val response = withContext(Dispatchers.IO) {
+                        executeRequest(url, headers, jsonBody, requestType)
+                    }
+                    withContext(Dispatchers.Main) {
+                        try {
+                            callback(response)
+                        } catch (e: JSONException) {
+                            Log.e("API CALL", "Error with response data: $e")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("API CALL", "Error api call: $e")
                 }
             }
         }
