@@ -8,6 +8,7 @@ import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import okhttp3.FormBody
 import okhttp3.Headers
+import org.json.JSONObject
 
 class Authentication {
     companion object {
@@ -29,10 +30,11 @@ class Authentication {
             Request.makeRequest(
                 "$apiUrl/api/auth/login",
                 headers,
-                formBody
+                formBody,
+                Request.Companion.REQUEST_TYPE.POST
             ) { dto ->
                 run {
-                    val data = dto.getJSONObject("data")
+                    val data = JSONObject(dto).getJSONObject("data")
 
                     setAccessToken(data.getString("token"))
                     if (isNew) {

@@ -1,5 +1,3 @@
 package com.eipsaferoad.owl.models
 
-class Alarm(public var vibration: AlarmType, public var sound: AlarmType, public var isAlarmActivate: Boolean) {
-
-}
+class Alarm(var vibration: AlarmType, var sound: AlarmType, var isAlarmActivate: Boolean, var music: String, var iconId: Int)
