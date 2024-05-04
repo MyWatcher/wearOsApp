@@ -41,7 +41,9 @@ class Authentication {
                         LocalStorage.setData(context, EnvEnum.EMAIL.value, email)
                         LocalStorage.setData(context, EnvEnum.PASSWORD.value, password)
                     }
-                    navController.navigate(PagesEnum.HOME.value)
+                    if (navController.currentBackStackEntry?.destination?.route == PagesEnum.LOGIN.value) {
+                        navController.navigate(PagesEnum.HOME.value)
+                    }
                 }
             }
         }
