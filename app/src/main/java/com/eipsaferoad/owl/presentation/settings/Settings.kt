@@ -83,7 +83,7 @@ fun saveOnServer(apiUrl: String, accessToken: String?, alarms: Alarm) {
         put("isVibrationActivate", alarms.vibration.isActivate)
         put("vibrationLevel", alarms.vibration.actual.toInt())
         put("isSoundActivate", alarms.sound.isActivate)
-        put("soundLevel", alarms.sound.actual.toInt())
+        put("soundLevel", alarms.sound.actual)
         put("music", alarms.music)
         put("iconId", alarms.iconId)
     }.toString()
@@ -144,13 +144,17 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
 fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
+    var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var vibrationEffectSingle by remember {
         mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
     }
     
-    DisposableEffect(isVibrationActivate) {
+    DisposableEffect(isVibrationActivate, vibrationVal) {
         onDispose {
-            LocalStorage.setData(context, EnvEnum.VIBRATION_ALARM.value, if (isVibrationActivate) "1" else "0")
+            var data = if (isVibrationActivate) "1" else "0"
+            data += vibrationVal.toString()
+            Log.d("PADOU", vibrationVal.toString())
+            LocalStorage.setData(context, EnvEnum.VIBRATION_ALARM.value, data)
         }
     }
 
@@ -160,7 +164,9 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
             .height(if (isVibrationSelected) 80.dp else 40.dp),
         shape = RoundedCornerShape(10),
         colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
-        onClick = {}
+        onClick = {
+            isVibrationSelected = !isVibrationSelected
+        }
     ) {
         Column(
             modifier = Modifier
@@ -178,6 +184,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                 Text(
                     text = "Vibration",
                 )
+                if (isVibrationSelected) {
                     Switch(
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color(0xFF00275B),
@@ -187,13 +194,57 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                         ),
                         checked = isVibrationActivate,
                         onCheckedChange = {
-                            alarms.value.vibration.isActivate = it; isVibrationActivate = it
                             saveOnServer(apiUrl, accessToken, alarms.value)
-                            if (it) {
+                            alarms.value.vibration.isActivate = it; isVibrationActivate = it
+                        }
+                    )
+                }
+            }
+            if (isVibrationSelected) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp, end = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "-",
+                        modifier = Modifier.clickable {
+                            alarms.value.vibration.updateAlarm(false)
+                            saveOnServer(apiUrl, accessToken, alarms.value)
+                            if (vibrationVal > alarms.value.vibration.min) {
+                                vibrationVal -= 1f
                                 mVibrator.vibrate(vibrationEffectSingle)
                             }
                         }
                     )
+                    Box(
+                        modifier = Modifier
+                            .width(150.dp)
+                            .height(5.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    ) {
+                        LinearProgressIndicator(
+                            progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
+                            modifier = Modifier
+                                .height(5.dp),
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                    Text(
+                        text = "+",
+                        modifier = Modifier
+                            .clickable {
+                                alarms.value.vibration.updateAlarm()
+                                saveOnServer(apiUrl, accessToken, alarms.value)
+                                if (vibrationVal < alarms.value.vibration.max.toFloat()) {
+                                    vibrationVal += 1f
+                                    mVibrator.vibrate(vibrationEffectSingle)
+                                }
+                            }
+                    )
+                }
             }
         }
     }

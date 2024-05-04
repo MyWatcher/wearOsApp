@@ -109,7 +109,8 @@ class MainActivity : ComponentActivity(),
         }
         val vibration = LocalStorage.getData(this, EnvEnum.VIBRATION_ALARM.value)
         if (!vibration.isNullOrEmpty()) {
-            alarms.value.vibration.isActivate = vibration == "1";
+            alarms.value.vibration.isActivate = vibration[0] == '1';
+            alarms.value.vibration.actual = vibration.substring(1).toFloat()
         }
         val sound = LocalStorage.getData(this, EnvEnum.SOUND_ALARM.value)
         if (!sound.isNullOrEmpty()) {
@@ -250,6 +251,8 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     alarms.value.sound.isActivate = dataArray.getString("isSoundActivate").equals("true")
                     alarms.value.iconId = dataArray.getString("iconId").toInt()
                     alarms.value.music = dataArray.getString("music")
+                    alarms.value.vibration.actual = dataArray.getString("vibrationLevel").toFloat()
+                    alarms.value.sound.actual = dataArray.getString("soundLevel").toFloat()
                 }
             }
         }
