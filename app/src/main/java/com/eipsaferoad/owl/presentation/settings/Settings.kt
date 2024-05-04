@@ -51,6 +51,7 @@ import com.eipsaferoad.owl.models.AlarmType
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
+import com.eipsaferoad.owl.utils.getVibrationEffects
 import com.eipsaferoad.owl.utils.soundPlayer
 import okhttp3.FormBody
 import okhttp3.Headers
@@ -145,15 +146,11 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
-    var vibrationEffectSingle by remember {
-        mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
     
     DisposableEffect(isVibrationActivate, vibrationVal) {
         onDispose {
             var data = if (isVibrationActivate) "1" else "0"
             data += vibrationVal.toString()
-            Log.d("PADOU", vibrationVal.toString())
             LocalStorage.setData(context, EnvEnum.VIBRATION_ALARM.value, data)
         }
     }
@@ -215,7 +212,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                             saveOnServer(apiUrl, accessToken, alarms.value)
                             if (vibrationVal > alarms.value.vibration.min) {
                                 vibrationVal -= 1f
-                                mVibrator.vibrate(vibrationEffectSingle)
+                                mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
                             }
                         }
                     )
@@ -240,7 +237,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                                 saveOnServer(apiUrl, accessToken, alarms.value)
                                 if (vibrationVal < alarms.value.vibration.max.toFloat()) {
                                     vibrationVal += 1f
-                                    mVibrator.vibrate(vibrationEffectSingle)
+                                    mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
                                 }
                             }
                     )
