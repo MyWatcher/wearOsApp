@@ -1,6 +1,10 @@
 package com.eipsaferoad.owl
 
 import android.os.VibrationEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.models.SoundAlarm
 import com.eipsaferoad.owl.models.VibrationAlarm
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -53,6 +57,5 @@ class OwlTest {
         alarm.updateAlarm()
         alarm.updateAlarm()
         alarm.updateAlarm()
-
     }
 }
