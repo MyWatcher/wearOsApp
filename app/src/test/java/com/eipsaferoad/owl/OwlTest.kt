@@ -26,11 +26,9 @@ class OwlTest {
         assertEquals(alarm.max, 3)
         assertEquals(alarm.min, 0)
         assertEquals(alarm.actual, 0.0f)
-        var res = alarm.updateAlarm()
-        assertEquals(res, VibrationEffect.DEFAULT_AMPLITUDE)
+        alarm.updateAlarm();
         assertEquals(alarm.actual, 1.0f)
-        res = alarm.updateAlarm(false)
-        assertEquals(res, VibrationEffect.DEFAULT_AMPLITUDE)
+        alarm.updateAlarm(false);
         assertEquals(alarm.actual, 0.0f)
         alarm.updateAlarm()
         alarm.updateAlarm()
@@ -55,8 +53,6 @@ class OwlTest {
         alarm.updateAlarm()
         alarm.updateAlarm()
         alarm.updateAlarm()
-        res = alarm.updateAlarm()
-        assertEquals(res, VibrationEffect.DEFAULT_AMPLITUDE)
 
     }
 }

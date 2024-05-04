@@ -60,6 +60,7 @@ import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
+import com.eipsaferoad.owl.utils.getVibrationEffects
 import com.eipsaferoad.owl.utils.soundPlayer
 import kotlinx.coroutines.delay
 
@@ -203,15 +204,12 @@ fun borderBrushMultiColor(colors: List<Color>): Brush {
 
 @Composable
 fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
-    var vibrationEffectSingle by remember {
-        mutableStateOf(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-    }
 
     LaunchedEffect(Unit) {
         while(true) {
             if (alarms.value.isAlarmActivate && alarms.value.vibration.isActivate) {
                 Log.d("PADOU", "vibration are called here")
-                mVibrator.vibrate(vibrationEffectSingle)
+                mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
             }
             delay(2000)
         }
