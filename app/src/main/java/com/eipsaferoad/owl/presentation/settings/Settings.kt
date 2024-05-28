@@ -181,8 +181,8 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                         ),
                         checked = isVibrationActivate,
                         onCheckedChange = {
-                            saveOnServer(apiUrl, accessToken, alarms.value)
                             alarms.value.vibration.isActivate = it; isVibrationActivate = it
+                            saveOnServer(apiUrl, accessToken, alarms.value)
                         }
                     )
                 }
@@ -291,8 +291,8 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
                         ),
                         checked = isSoundActivate,
                         onCheckedChange = {
-                            saveOnServer(apiUrl, accessToken, alarms.value)
                             alarms.value.sound.isActivate = it; isSoundActivate = it
+                            saveOnServer(apiUrl, accessToken, alarms.value)
                         }
                     )
                 }
