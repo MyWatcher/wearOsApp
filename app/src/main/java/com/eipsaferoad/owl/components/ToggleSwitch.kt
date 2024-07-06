@@ -15,7 +15,7 @@ import com.eipsaferoad.owl.presentation.theme.md_theme_dark_tertiary
 import com.eipsaferoad.owl.presentation.theme.md_theme_light_surface
 
 @Composable
-fun ToggleSwitch(isActivate: Boolean, action: () -> Unit) {
+fun ToggleSwitch(isActivate: Boolean, action: (it: Boolean) -> Unit) {
     Switch(
         colors = SwitchDefaults.colors(
             checkedThumbColor = md_theme_light_surface,
@@ -25,7 +25,7 @@ fun ToggleSwitch(isActivate: Boolean, action: () -> Unit) {
         ),
         checked = isActivate,
         onCheckedChange = {
-            action()
+            action(it)
         }
     )
 }

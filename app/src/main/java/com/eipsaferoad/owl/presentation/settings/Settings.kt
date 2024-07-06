@@ -28,17 +28,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
-import androidx.wear.compose.material.Switch
-import androidx.wear.compose.material.SwitchDefaults
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.api.Request
+import com.eipsaferoad.owl.components.ToggleSwitch
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
@@ -114,15 +112,9 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
                 text = "Activate Alarm",
                 modifier = Modifier.weight(1f)
             )
-            Switch(
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF00275B),
-                    checkedTrackColor = Color(0xFF00275B),
-                    uncheckedThumbColor = Color(0xFF00275B),
-                    uncheckedTrackColor = Color(0xFF8D9497)
-                ),
-                checked = isAlarmActivate,
-                onCheckedChange = {
+            ToggleSwitch(
+                isActivate = isAlarmActivate,
+                action = {
                     alarms.value.isAlarmActivate = it; isAlarmActivate = it
                     saveOnServer(apiUrl, accessToken, alarms.value)
                 }
@@ -172,15 +164,9 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                     text = "Vibration",
                 )
                 if (isVibrationSelected) {
-                    Switch(
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF00275B),
-                            checkedTrackColor = Color(0xFF00275B),
-                            uncheckedThumbColor = Color(0xFF00275B),
-                            uncheckedTrackColor = Color(0xFF8D9497)
-                        ),
-                        checked = isVibrationActivate,
-                        onCheckedChange = {
+                    ToggleSwitch(
+                        isActivate = isVibrationActivate,
+                        action = {
                             alarms.value.vibration.isActivate = it; isVibrationActivate = it
                             saveOnServer(apiUrl, accessToken, alarms.value)
                         }
@@ -282,15 +268,9 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
                     text = "Sound",
                 )
                 if (isSoundSelected) {
-                    Switch(
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color(0xFF00275B),
-                            checkedTrackColor = Color(0xFF00275B),
-                            uncheckedThumbColor = Color(0xFF00275B),
-                            uncheckedTrackColor = Color(0xFF8D9497)
-                        ),
-                        checked = isSoundActivate,
-                        onCheckedChange = {
+                    ToggleSwitch(
+                        isActivate = isSoundActivate,
+                        action = {
                             alarms.value.sound.isActivate = it; isSoundActivate = it
                             saveOnServer(apiUrl, accessToken, alarms.value)
                         }
