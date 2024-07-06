@@ -6,7 +6,6 @@ enum class PagesEnum(val value: String) {
     LOGIN("login"),
     HOME("home"),
     SETTINGS("settings"),
-    ALARM("alarm")
 }
 
 typealias ComposableFun = @Composable () -> Unit

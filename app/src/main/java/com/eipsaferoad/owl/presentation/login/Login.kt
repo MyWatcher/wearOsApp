@@ -16,14 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
-import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.core.Authentication
-import com.eipsaferoad.owl.presentation.PagesEnum
-import com.eipsaferoad.owl.presentation.components.TextInput
+import com.eipsaferoad.owl.components.TextInput
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
-import com.eipsaferoad.owl.utils.LocalStorage
-import okhttp3.FormBody
-import okhttp3.Headers
 
 @Composable
 fun Login(context: Context, apiUrl: String, navController: NavHostController, setAccessToken: (token: String) -> Unit) {
