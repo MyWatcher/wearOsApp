@@ -4,7 +4,9 @@ import android.content.Context
 import android.os.Build
 import android.os.Vibrator
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,6 +40,7 @@ import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.components.ToggleSwitch
+import com.eipsaferoad.owl.components.handleDraggableModifier
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
@@ -44,6 +48,7 @@ import com.eipsaferoad.owl.utils.getVibrationEffects
 import com.eipsaferoad.owl.utils.soundPlayer
 import okhttp3.Headers
 import org.json.JSONObject
+import kotlin.math.abs
 
 @Composable
 fun Settings(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
@@ -123,11 +128,14 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
+    var lastPosX by remember { mutableStateOf(0.0f) }
+    val nbrPixelToMove = 70
     
     DisposableEffect(isVibrationActivate, vibrationVal) {
         onDispose {
@@ -186,7 +194,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                         modifier = Modifier.clickable {
                             alarms.value.vibration.updateAlarm(false)
                             saveOnServer(apiUrl, accessToken, alarms.value)
-                            if (vibrationVal > alarms.value.vibration.min) {
+                            if (vibrationVal > alarms.value.vibration.min.toFloat()) {
                                 vibrationVal -= 1f
                                 mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
                             }
@@ -201,6 +209,26 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                         LinearProgressIndicator(
                             progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
                             modifier = Modifier
+                                .pointerInput(Unit) {
+                                    detectDragGestures { change, dragAmount ->
+                                        change.consume()
+                                        if (lastPosX == 0.0f) {
+                                            lastPosX = change.position.x
+                                        }
+                                        if (change.previousPosition.x < change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal < alarms.value.vibration.max.toFloat()) {
+                                            println("up")
+                                            vibrationVal += 1f
+                                            lastPosX = change.position.x
+                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
+                                        } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal > alarms.value.vibration.min.toFloat()) {
+                                            println("down")
+                                            vibrationVal -= 1f
+                                            lastPosX = change.position.x
+                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
+                                        }
+                                        println(vibrationVal)
+                                    }
+                                }
                                 .height(5.dp),
                             color = MaterialTheme.colorScheme.secondary
                         )
