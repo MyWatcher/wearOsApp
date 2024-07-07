@@ -85,7 +85,7 @@ fun saveOnServer(apiUrl: String, accessToken: String?, alarms: Alarm) {
     Request.makeRequest(
         "$apiUrl/api/alarmPreferences",
         Request.Companion.REQUEST_TYPE.PUT,
-        {},
+        { println("data save on server") },
         headers,
         jsonBody,
     )
@@ -128,14 +128,13 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var lastPosX by remember { mutableStateOf(0.0f) }
-    val nbrPixelToMove = 70
+    val nbrPixelToMove by remember { mutableStateOf(70) }
     
     DisposableEffect(isVibrationActivate, vibrationVal) {
         onDispose {
@@ -219,12 +218,12 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                                             println("up")
                                             vibrationVal += 1f
                                             lastPosX = change.position.x
-                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
+                                            mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
                                         } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal > alarms.value.vibration.min.toFloat()) {
                                             println("down")
                                             vibrationVal -= 1f
                                             lastPosX = change.position.x
-                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
+                                            mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
                                         }
                                         println(vibrationVal)
                                     }
@@ -257,6 +256,8 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
     var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
+    var lastPosX by remember { mutableStateOf(0.0f) }
+    val nbrPixelToMove by remember { mutableStateOf(40) }
 
     DisposableEffect(isSoundActivate, soundVal) {
         onDispose {
@@ -333,6 +334,23 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
                         LinearProgressIndicator(
                             progress = soundVal / (alarms.value.sound.max - alarms.value.sound.min),
                             modifier = Modifier
+                                .pointerInput(Unit) {
+                                    detectDragGestures { change, dragAmount ->
+                                        change.consume()
+                                        if (lastPosX == 0.0f) {
+                                            lastPosX = change.position.x
+                                        }
+                                        if (change.previousPosition.x < change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && soundVal < alarms.value.sound.max.toFloat()) {
+                                            soundVal += 0.2f
+                                            lastPosX = change.position.x
+                                            soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
+                                        } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && soundVal > alarms.value.sound.min.toFloat()) {
+                                            soundVal -= 0.2f
+                                            lastPosX = change.position.x
+                                            soundPlayer(context, soundVal, fileId = R.raw.alarm_test)
+                                        }
+                                    }
+                                }
                                 .height(5.dp),
                             color = MaterialTheme.colorScheme.secondary
                         )

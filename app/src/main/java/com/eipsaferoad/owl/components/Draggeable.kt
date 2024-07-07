@@ -8,9 +8,9 @@ import androidx.compose.ui.Modifier
 import com.eipsaferoad.owl.models.Alarm
 
 fun Modifier.handleDraggableModifier(
-    lastPosX: Float,
-    vibrationVal: Float,
-    nbrPixelToMove: Int,
+    lastPosX: MutableState<Float>,
+    vibrationVal: MutableState<Float>,
+    nbrPixelToMove: MutableState<Int>,
     alarms: MutableState<Alarm>,
     dragLeft: (value: Float) -> Unit,
     dragRight: (value: Float) -> Unit,
@@ -19,12 +19,12 @@ fun Modifier.handleDraggableModifier(
     return this.pointerInput(Unit) {
         detectDragGestures { change, dragAmount ->
             change.consume()
-            if (lastPosX == 0.0f) {
+            if (lastPosX.value == 0.0f) {
                 init(change.position.x)
             }
-            if (change.previousPosition.x < change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal < alarms.value.vibration.max.toFloat()) {
+            if (change.previousPosition.x < change.position.x && abs(lastPosX.value - change.position.x) > nbrPixelToMove.value && vibrationVal.value < alarms.value.vibration.max.toFloat()) {
                 dragRight(change.position.x)
-            } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal > alarms.value.vibration.min) {
+            } else if (change.previousPosition.x > change.position.x && abs(lastPosX.value - change.position.x) > nbrPixelToMove.value && vibrationVal.value > alarms.value.vibration.min) {
                 dragLeft(change.position.x)
             }
             println(vibrationVal)
