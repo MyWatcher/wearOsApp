@@ -12,7 +12,6 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -45,7 +44,6 @@ import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.SoundAlarm
 import com.eipsaferoad.owl.models.VibrationAlarm
 import com.eipsaferoad.owl.presentation.PagesEnum
-import com.eipsaferoad.owl.presentation.alarm.Alarm
 import com.eipsaferoad.owl.presentation.home.Home
 import com.eipsaferoad.owl.presentation.login.Login
 import com.eipsaferoad.owl.presentation.settings.Settings
@@ -294,17 +292,6 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                 ) {
                     TimeText()
                     Settings(context, alarms, mVibrator, apiUrl, accessToken.value )
-                }
-            }
-            composable(PagesEnum.ALARM.value) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colors.background),
-                    contentAlignment = Alignment.Center
-                ) {
-                    TimeText()
-                    Alarm(currentHeartRate.value, context, navController)
                 }
             }
         }

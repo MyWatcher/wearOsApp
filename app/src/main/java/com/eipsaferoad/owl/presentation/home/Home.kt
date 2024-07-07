@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Favorite
@@ -45,12 +43,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.R
+import com.eipsaferoad.owl.components.Button
+import com.eipsaferoad.owl.components.ButtonTypeEnum
+import com.eipsaferoad.owl.components.DisplayIcon
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.presentation.PagesEnum
 import com.eipsaferoad.owl.presentation.theme.OwlTheme
@@ -87,11 +86,7 @@ fun NoAlarm(currentHeartRate: String, context: Context, navController: NavHostCo
                             verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Favorite,
-                        contentDescription = "Favorite Icon",
-                        tint = Color.Red
-                    )
+                    DisplayIcon(imageVector = Icons.Rounded.Favorite, tint = Color.Red)
                     Text(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
@@ -116,34 +111,31 @@ fun Buttons(context: Context, navController: NavHostController) {
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Button(
-            modifier = Modifier
-                .width(150.dp),
-            shape = RoundedCornerShape(10),
-            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
-            onClick = {
+            type = ButtonTypeEnum.PRIMARY,
+            content = {
+                Text(
+                    fontSize = 30.sp,
+                    text = "ALARM"
+                )
+            },
+            action = {
                 navController.navigate(PagesEnum.SETTINGS.value)
             }
-        ) {
-            Text(
-                fontSize = 30.sp,
-                text = "ALARM",
-            )
-        }
+        )
         Button(
-            modifier = Modifier.width(150.dp),
-            shape = RoundedCornerShape(10),
-            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.tertiary),
-            onClick = {
+            type = ButtonTypeEnum.REDIRECTION,
+            content = {
+                Text(
+                    fontSize = 17.sp,
+                    text = "DISCONNECTION",
+                )
+            },
+            action = {
                 LocalStorage.deleteData(context, EnvEnum.EMAIL.value)
                 LocalStorage.deleteData(context, EnvEnum.PASSWORD.value)
                 navController.navigate(PagesEnum.LOGIN.value)
             }
-        ) {
-            Text(
-                fontSize = 17.sp,
-                text = "DISCONNECTION",
-            )
-        }
+        )
     }
 }
 
@@ -262,15 +254,19 @@ fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: Muta
                     text = "SOS",
                     fontSize = 30.sp
                 )
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = MaterialTheme.colorScheme.secondary,
-                    ),
-                    onClick = {
-                        currentHeartRate.value = "100"
-                    }
-                ) {
-                    CircleIcon(icon = Icons.Rounded.Clear, tint = MaterialTheme.colorScheme.surface)
+                Box(modifier = Modifier.size(50.dp)) {
+                    Button(
+                        type = ButtonTypeEnum.REDIRECTION,
+                        content = {
+                            CircleIcon(
+                                icon = Icons.Rounded.Clear,
+                                tint = MaterialTheme.colorScheme.surface
+                            )
+                        },
+                        action = {
+                            currentHeartRate.value = "100"
+                        }
+                    )
                 }
             }
         }
