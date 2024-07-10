@@ -12,16 +12,18 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.SwitchDefaults
 import com.eipsaferoad.owl.presentation.theme.md_theme_dark_tertiary
+import com.eipsaferoad.owl.presentation.theme.md_theme_light_primary
+import com.eipsaferoad.owl.presentation.theme.md_theme_light_secondary
 import com.eipsaferoad.owl.presentation.theme.md_theme_light_surface
 
 @Composable
 fun ToggleSwitch(isActivate: Boolean, action: (it: Boolean) -> Unit) {
     Switch(
         colors = SwitchDefaults.colors(
-            checkedThumbColor = md_theme_light_surface,
-            checkedTrackColor = md_theme_light_surface,
-            uncheckedThumbColor = md_theme_light_surface,
-            uncheckedTrackColor = md_theme_dark_tertiary
+            checkedThumbColor = md_theme_light_primary,
+            checkedTrackColor = md_theme_light_secondary,
+            uncheckedThumbColor = md_theme_light_primary,
+            uncheckedTrackColor = md_theme_light_secondary
         ),
         checked = isActivate,
         onCheckedChange = {
