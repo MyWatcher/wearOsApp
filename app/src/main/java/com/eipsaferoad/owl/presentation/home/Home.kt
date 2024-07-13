@@ -8,8 +8,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,19 +20,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -45,12 +49,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import com.eipsaferoad.owl.R
+import com.eipsaferoad.owl.components.Button
+import com.eipsaferoad.owl.components.ButtonTypeEnum
+import com.eipsaferoad.owl.components.DisplayIcon
 import com.eipsaferoad.owl.models.Alarm
 import com.eipsaferoad.owl.models.SoundAlarm
 import com.eipsaferoad.owl.models.VibrationAlarm
@@ -62,6 +67,11 @@ import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.getVibrationEffects
 import com.eipsaferoad.owl.utils.soundPlayer
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
@@ -74,27 +84,58 @@ fun Home(currentHeartRate: MutableState<String>, context: Context, navController
 
 @Composable
 fun NoAlarm(currentHeartRate: String, context: Context, navController: NavHostController) {
+    val lazyListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = 1
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LazyColumn(
+            state = lazyListState,
             modifier = Modifier.height(200.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             item {
                 Column(
+                    modifier = Modifier.padding(top = 80.dp, start = 10.dp, end = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Button(
+                        type = ButtonTypeEnum.REDIRECTION,
+                        content = {
+                            Text(
+                                fontSize = 17.sp,
+                                text = "DISCONNECTION",
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 10.dp)
+                            )
+                        },
+                        action = {
+                            LocalStorage.deleteData(context, EnvEnum.EMAIL.value)
+                            LocalStorage.deleteData(context, EnvEnum.PASSWORD.value)
+                            navController.navigate(PagesEnum.LOGIN.value)
+                        }
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.logout),
+                        contentDescription = "logout",
+                        modifier = Modifier
+                            .size(30.dp)
+                            .padding(top = 10.dp)
+                    )
+                }
+            }
+            item {
+                Column(
                     modifier = Modifier.padding(bottom =  100.dp, top = 70.dp),
                             verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Favorite,
-                        contentDescription = "Favorite Icon",
-                        tint = Color.Red
-                    )
+                    DisplayIcon(imageVector = Icons.Rounded.Favorite, tint = Color.Red)
                     Text(
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
@@ -106,46 +147,25 @@ fun NoAlarm(currentHeartRate: String, context: Context, navController: NavHostCo
                 }
             }
             item {
-                Buttons(context = context, navController = navController)
+                Column(
+                    modifier = Modifier.padding(bottom = 60.dp, start = 10.dp, end = 10.dp)
+                ) {
+                    Button(
+                        type = ButtonTypeEnum.PRIMARY,
+                        content = {
+                            Text(
+                                fontSize = 30.sp,
+                                text = "ALARM",
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(vertical = 15.dp)
+                            )
+                        },
+                        action = {
+                            navController.navigate(PagesEnum.SETTINGS.value)
+                        }
+                    )
+                }
             }
-        }
-    }
-}
-
-@Composable
-fun Buttons(context: Context, navController: NavHostController) {
-    Column(
-        modifier = Modifier.padding(bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        Button(
-            modifier = Modifier
-                .width(150.dp),
-            shape = RoundedCornerShape(10),
-            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
-            onClick = {
-                navController.navigate(PagesEnum.SETTINGS.value)
-            }
-        ) {
-            Text(
-                fontSize = 30.sp,
-                text = "ALARM",
-            )
-        }
-        Button(
-            modifier = Modifier.width(150.dp),
-            shape = RoundedCornerShape(10),
-            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.tertiary),
-            onClick = {
-                LocalStorage.deleteData(context, EnvEnum.EMAIL.value)
-                LocalStorage.deleteData(context, EnvEnum.PASSWORD.value)
-                navController.navigate(PagesEnum.LOGIN.value)
-            }
-        ) {
-            Text(
-                fontSize = 17.sp,
-                text = "DISCONNECTION",
-            )
         }
     }
 }
@@ -265,15 +285,19 @@ fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: Muta
                     text = "SOS",
                     fontSize = 30.sp
                 )
-                Button(
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = MaterialTheme.colorScheme.secondary,
-                    ),
-                    onClick = {
-                        currentHeartRate.value = "100"
-                    }
-                ) {
-                    CircleIcon(icon = Icons.Rounded.Clear, tint = MaterialTheme.colorScheme.surface)
+                Box(modifier = Modifier.size(50.dp)) {
+                    Button(
+                        type = ButtonTypeEnum.REDIRECTION,
+                        content = {
+                            CircleIcon(
+                                icon = Icons.Rounded.Clear,
+                                tint = MaterialTheme.colorScheme.surface
+                            )
+                        },
+                        action = {
+                            currentHeartRate.value = "100"
+                        }
+                    )
                 }
             }
         }
@@ -306,15 +330,6 @@ fun PreviewHome() {
     OwlTheme {
             Home(bpm, LocalContext.current,  navController, true)
     }*/
-}
-
-@Composable
-@Preview
-fun PreviewButtons() {
-    val navController = rememberSwipeDismissableNavController()
-    OwlTheme {
-        Buttons(LocalContext.current,  navController)
-    }
 }
 
 @Composable

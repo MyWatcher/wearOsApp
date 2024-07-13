@@ -1,4 +1,4 @@
-package com.eipsaferoad.owl.presentation.components
+package com.eipsaferoad.owl.components
 
 import android.app.RemoteInput
 import android.content.Intent
