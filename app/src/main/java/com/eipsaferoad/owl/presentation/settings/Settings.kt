@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Vibrator
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,18 +32,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.Text
 import com.eipsaferoad.owl.R
 import com.eipsaferoad.owl.api.Request
 import com.eipsaferoad.owl.components.ToggleSwitch
 import com.eipsaferoad.owl.components.handleDraggableModifier
 import com.eipsaferoad.owl.models.Alarm
+import com.eipsaferoad.owl.presentation.theme.md_theme_light_onSurfaceVariant
 import com.eipsaferoad.owl.utils.EnvEnum
 import com.eipsaferoad.owl.utils.LocalStorage
 import com.eipsaferoad.owl.utils.getVibrationEffects
@@ -77,7 +84,7 @@ fun saveOnServer(apiUrl: String, accessToken: String?, alarms: Alarm) {
         put("isVibrationActivate", alarms.vibration.isActivate)
         put("vibrationLevel", alarms.vibration.actual.toInt())
         put("isSoundActivate", alarms.sound.isActivate)
-        put("soundLevel", alarms.sound.actual)
+        put("soundLevel", alarms.sound.actual.toInt())
         put("music", alarms.music)
         put("iconId", alarms.iconId)
     }.toString()
@@ -85,7 +92,7 @@ fun saveOnServer(apiUrl: String, accessToken: String?, alarms: Alarm) {
     Request.makeRequest(
         "$apiUrl/api/alarmPreferences",
         Request.Companion.REQUEST_TYPE.PUT,
-        {},
+        { println("data save on server") },
         headers,
         jsonBody,
     )
@@ -106,7 +113,7 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
             .width(200.dp)
             .height(40.dp),
         shape = RoundedCornerShape(10),
-        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
         onClick = { alarms.value.isAlarmActivate = !alarms.value.isAlarmActivate }
     ) {
         Row(
@@ -128,15 +135,16 @@ fun AlarmButton(context: Context, alarms: MutableState<Alarm>, apiUrl: String, a
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vibrator, apiUrl: String, accessToken: String?) {
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isVibrationActivate by remember { mutableStateOf(alarms.value.vibration.isActivate) }
     var vibrationVal by remember { mutableStateOf(alarms.value.vibration.actual) }
     var lastPosX by remember { mutableStateOf(0.0f) }
-    val nbrPixelToMove = 70
-    
+    val nbrPixelToMove by remember { mutableStateOf(70) }
+    var heightBar by remember { mutableStateOf(10.dp) }
+    val animatedHeightBar by animateDpAsState(targetValue = heightBar)
+
     DisposableEffect(isVibrationActivate, vibrationVal) {
         onDispose {
             var data = if (isVibrationActivate) "1" else "0"
@@ -150,7 +158,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
             .width(200.dp)
             .height(if (isVibrationSelected) 80.dp else 40.dp),
         shape = RoundedCornerShape(10),
-        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
+        colors = ButtonDefaults.buttonColors(backgroundColor = md_theme_light_onSurfaceVariant),
         onClick = {
             isVibrationSelected = !isVibrationSelected
         }
@@ -158,7 +166,7 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = if (isVibrationSelected) 0.dp else 10.dp, bottom = 10.dp),
+                .padding(top = 10.dp, bottom = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround
         ) {
@@ -179,19 +187,23 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                             saveOnServer(apiUrl, accessToken, alarms.value)
                         }
                     )
+                } else {
+                    Icon(painter = painterResource(id = R.drawable.vibration), contentDescription = "")
                 }
             }
             if (isVibrationSelected) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp, end = 10.dp),
+                        .width(180.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "-",
-                        modifier = Modifier.clickable {
+                        fontSize = 30.sp,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .clickable {
                             alarms.value.vibration.updateAlarm(false)
                             saveOnServer(apiUrl, accessToken, alarms.value)
                             if (vibrationVal > alarms.value.vibration.min.toFloat()) {
@@ -202,40 +214,51 @@ fun VibrationButton(context: Context, alarms: MutableState<Alarm>, mVibrator: Vi
                     )
                     Box(
                         modifier = Modifier
-                            .width(150.dp)
-                            .height(5.dp)
+                            .width(130.dp)
+                            .height(animatedHeightBar)
                             .clip(RoundedCornerShape(8.dp))
                     ) {
                         LinearProgressIndicator(
                             progress = vibrationVal / (alarms.value.vibration.max - alarms.value.vibration.min),
                             modifier = Modifier
                                 .pointerInput(Unit) {
-                                    detectDragGestures { change, dragAmount ->
+                                    detectDragGestures(
+                                        onDragEnd = {heightBar = 10.dp}
+                                    ) { change, dragAmount ->
                                         change.consume()
+                                        heightBar = 20.dp
                                         if (lastPosX == 0.0f) {
                                             lastPosX = change.position.x
                                         }
-                                        if (change.previousPosition.x < change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal < alarms.value.vibration.max.toFloat()) {
+                                        if (change.previousPosition.x < change.position.x && abs(
+                                                lastPosX - change.position.x
+                                            ) > nbrPixelToMove && vibrationVal < alarms.value.vibration.max.toFloat()
+                                        ) {
                                             println("up")
                                             vibrationVal += 1f
                                             lastPosX = change.position.x
-                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
-                                        } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal > alarms.value.vibration.min.toFloat()) {
+                                            mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
+                                            saveOnServer(apiUrl, accessToken, alarms.value)
+                                        } else if (change.previousPosition.x > change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && vibrationVal > alarms.value.vibration.min.toFloat()
+                                        ) {
                                             println("down")
                                             vibrationVal -= 1f
                                             lastPosX = change.position.x
-                                            /*mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])*/
+                                            mVibrator.vibrate(getVibrationEffects()[alarms.value.vibration.actual.toInt()])
+                                            saveOnServer(apiUrl, accessToken, alarms.value)
                                         }
                                         println(vibrationVal)
                                     }
                                 }
-                                .height(5.dp),
+                                .height(animatedHeightBar),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
                     Text(
                         text = "+",
+                        fontSize = 30.sp,
                         modifier = Modifier
+                            .padding(start = 5.dp)
                             .clickable {
                                 alarms.value.vibration.updateAlarm()
                                 saveOnServer(apiUrl, accessToken, alarms.value)
@@ -257,6 +280,10 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
     var soundVal by remember { mutableStateOf(alarms.value.sound.actual) }
     var isVibrationSelected by remember { mutableStateOf(false) }
     var isSoundSelected by remember { mutableStateOf(false) }
+    var lastPosX by remember { mutableStateOf(0.0f) }
+    val nbrPixelToMove by remember { mutableStateOf(40) }
+    var heightBar by remember { mutableStateOf(10.dp) }
+    val animatedHeightBar by animateDpAsState(targetValue = heightBar)
 
     DisposableEffect(isSoundActivate, soundVal) {
         onDispose {
@@ -271,7 +298,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
             .width(200.dp)
             .height(if (isSoundSelected) 80.dp else 40.dp),
         shape = RoundedCornerShape(10),
-        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colorScheme.primary),
+        colors = ButtonDefaults.buttonColors(backgroundColor = md_theme_light_onSurfaceVariant),
         onClick = {
             isSoundSelected = !isSoundSelected
             if (isVibrationSelected) {
@@ -282,7 +309,7 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = if (isSoundSelected) 0.dp else 10.dp, bottom = 10.dp),
+                .padding(top = 10.dp, bottom = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceAround
         ) {
@@ -303,19 +330,23 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
                             saveOnServer(apiUrl, accessToken, alarms.value)
                         }
                     )
+                } else {
+                    Icon(painter = painterResource(id = R.drawable.sound), contentDescription = "")
                 }
             }
             if (isSoundSelected) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 10.dp, end = 10.dp),
+                        .width(180.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "-",
-                        modifier = Modifier.clickable {
+                        fontSize = 30.sp,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .clickable {
                             alarms.value.sound.updateAlarm(false)
                             saveOnServer(apiUrl, accessToken, alarms.value)
                             if (soundVal > alarms.value.sound.min) {
@@ -326,20 +357,56 @@ fun SoundButton(alarms: MutableState<Alarm>, context: Context, apiUrl: String, a
                     )
                     Box(
                         modifier = Modifier
-                            .width(150.dp)
-                            .height(5.dp)
+                            .width(130.dp)
+                            .height(animatedHeightBar)
                             .clip(RoundedCornerShape(8.dp))
                     ) {
                         LinearProgressIndicator(
                             progress = soundVal / (alarms.value.sound.max - alarms.value.sound.min),
                             modifier = Modifier
-                                .height(5.dp),
+                                .pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragEnd = {heightBar = 10.dp}
+                                    ) { change, dragAmount ->
+                                        change.consume()
+                                        heightBar = 20.dp
+                                        if (lastPosX == 0.0f) {
+                                            lastPosX = change.position.x
+                                        }
+                                        if (change.previousPosition.x < change.position.x && abs(lastPosX - change.position.x) > nbrPixelToMove && soundVal < alarms.value.sound.max.toFloat()
+                                        ) {
+                                            soundVal += 0.2f
+                                            lastPosX = change.position.x
+                                            soundPlayer(
+                                                context,
+                                                soundVal,
+                                                fileId = R.raw.alarm_test
+                                            )
+                                            saveOnServer(apiUrl, accessToken, alarms.value)
+                                        } else if (change.previousPosition.x > change.position.x && abs(
+                                                lastPosX - change.position.x
+                                            ) > nbrPixelToMove && soundVal > alarms.value.sound.min.toFloat()
+                                        ) {
+                                            soundVal -= 0.2f
+                                            lastPosX = change.position.x
+                                            soundPlayer(
+                                                context,
+                                                soundVal,
+                                                fileId = R.raw.alarm_test
+                                            )
+                                            saveOnServer(apiUrl, accessToken, alarms.value)
+                                        }
+                                    }
+                                }
+                                .height(animatedHeightBar),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
                     Text(
                         text = "+",
+                        fontSize = 30.sp,
                         modifier = Modifier
+                            .padding(start = 10.dp)
                             .clickable {
                                 alarms.value.sound.updateAlarm()
                                 saveOnServer(apiUrl, accessToken, alarms.value)

@@ -38,7 +38,7 @@ fun Button(type: ButtonTypeEnum, content: @Composable () -> Unit, action: () -> 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .clip(shape = RoundedCornerShape(20.dp))
+            .clip(shape = RoundedCornerShape(100.dp))
             .background(backgroundColor)
             .clickable { action() },
         verticalArrangement = Arrangement.Center,
