@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -87,6 +89,39 @@ class MainActivity : ComponentActivity(),
     }
     private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
 
+    private val handler = Handler(Looper.getMainLooper())
+    private val runnable: Runnable = object : Runnable {
+        override fun run() {
+            refreshAccessToken()
+            handler.postDelayed(this, 55 * 60 * 1000)
+        }
+    }
+
+    private fun refreshAccessToken() {
+        val email = LocalStorage.getData(this, EnvEnum.EMAIL.value);
+        val password = LocalStorage.getData(this, EnvEnum.PASSWORD.value);
+        if (email != null && password != null) {
+            val headers = Headers.Builder()
+                .build()
+            val formBody = FormBody.Builder()
+                .add("email", email)
+                .add("password", password)
+                .build()
+            Request.makeRequest(
+                "${url.value}/api/auth/login",
+                headers,
+                formBody,
+                Request.Companion.REQUEST_TYPE.POST
+            ) { dto ->
+                run {
+                    val data = JSONObject(dto).getJSONObject("data")
+
+                    accessToken.value = data.getString("token")
+                }
+            }
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -115,6 +150,8 @@ class MainActivity : ComponentActivity(),
             alarms.value.sound.isActivate = sound[0] == '1';
             alarms.value.sound.actual = sound.substring(1).toFloat()
         }
+
+        handler.post(runnable)
 
         setContent {
             WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle, accessToken)
@@ -163,6 +200,12 @@ class MainActivity : ComponentActivity(),
         override fun onExitAmbient() {
             super.onExitAmbient()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Remove the callbacks to prevent memory leaks
+        handler.removeCallbacks(runnable)
     }
 
     override fun onStart() {
