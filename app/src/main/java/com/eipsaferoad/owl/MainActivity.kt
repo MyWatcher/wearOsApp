@@ -14,6 +14,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -62,6 +63,7 @@ import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.Wearable
 import okhttp3.FormBody
 import okhttp3.Headers
+import org.json.JSONException
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity(),
@@ -76,6 +78,7 @@ class MainActivity : ComponentActivity(),
     private var alarms: MutableState<Alarm> = mutableStateOf(Alarm(VibrationAlarm(), SoundAlarm(1, 0), false, "", 0))
     private var accessToken: MutableState<String?> = mutableStateOf(null)
     private var url: MutableState<String> = mutableStateOf("")
+    private var isDrowning: MutableState<Boolean> = mutableStateOf(false)
     private var activityContext: Context? = null
     private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
         override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
@@ -154,7 +157,7 @@ class MainActivity : ComponentActivity(),
         handler.post(runnable)
 
         setContent {
-            WearApp(this, bpm, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle, accessToken)
+            WearApp(this, bpm, isDrowning, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle, accessToken)
         }
     }
 
@@ -259,13 +262,31 @@ class MainActivity : ComponentActivity(),
                     .add("Authorization", "Bearer ${accessToken.value}")
                     .build()
                 Request.makeRequest("${url.value}/api/heart-rate", headers, formBody, Request.Companion.REQUEST_TYPE.POST) {}
+                val jsonBody = JSONObject().toString();
+                Request.makeRequest(
+                    "${url.value}/api/heart-rate",
+                    Request.Companion.REQUEST_TYPE.GET,
+                    { dto ->
+                        try {
+                            val jsonResponse = JSONObject(dto)
+                            val dataObject = jsonResponse.getJSONObject("data")
+                            val hrvResultObject = dataObject.getJSONObject("hrvResult")
+                            val isNormal = hrvResultObject.getBoolean("is_normal")
+                            isDrowning.value = !isNormal;
+                        } catch (e: JSONException) {
+                            Log.e("API CALL", "Error parsing JSON: $e")
+                        }
+                    },
+                    headers,
+                    jsonBody,
+                )
             }
         }
     }
 }
 
 @Composable
-fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect, accessToken: MutableState<String?>) {
+fun WearApp(context: Context, currentHeartRate: MutableState<String>, isDrowning: MutableState<Boolean>, alarms: MutableState<Alarm>, apiUrl: String, setAccessToken: (token: String) -> Unit, mVibrator: Vibrator, vibrationEffectSingle: VibrationEffect, accessToken: MutableState<String?>) {
     val navController = rememberSwipeDismissableNavController()
     val email = LocalStorage.getData(context, EnvEnum.EMAIL.value);
     val password = LocalStorage.getData(context, EnvEnum.PASSWORD.value);
@@ -312,7 +333,7 @@ fun WearApp(context: Context, currentHeartRate: MutableState<String>, alarms: Mu
                     contentAlignment = Alignment.Center
                 ) {
                     TimeText()
-                    Home(currentHeartRate, context, navController, alarms, mVibrator)
+                    Home(currentHeartRate, isDrowning, context, navController, alarms, mVibrator)
                 }
             }
             composable(PagesEnum.LOGIN.value) {

@@ -71,9 +71,9 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 
 @Composable
-fun Home(currentHeartRate: MutableState<String>, context: Context, navController: NavHostController, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
-    if (alarms.value.isAlarmActivate && currentHeartRate.value.toInt() < 50 && currentHeartRate.value.toInt() != 0) {
-        Alarm(context, currentHeartRate, alarms, mVibrator)
+fun Home(currentHeartRate: MutableState<String>, isDrowning: MutableState<Boolean>, context: Context, navController: NavHostController, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+    if (alarms.value.isAlarmActivate && isDrowning.value && currentHeartRate.value.toInt() != 0) {
+        Alarm(context, currentHeartRate, isDrowning, alarms, mVibrator)
     } else {
         NoAlarm(currentHeartRate.value, context, navController)
     }
@@ -219,7 +219,7 @@ fun borderBrushMultiColor(colors: List<Color>): Brush {
 }
 
 @Composable
-fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
+fun Alarm(context: Context, currentHeartRate: MutableState<String>, isDrowning: MutableState<Boolean>, alarms: MutableState<Alarm>, mVibrator: Vibrator) {
 
     LaunchedEffect(Unit) {
         while(true) {
@@ -292,7 +292,8 @@ fun Alarm(context: Context, currentHeartRate: MutableState<String>, alarms: Muta
                             )
                         },
                         action = {
-                            currentHeartRate.value = "100"
+                            // currentHeartRate.value = "100"
+                            isDrowning.value = false
                         }
                     )
                 }
