@@ -46,7 +46,12 @@ class HeartRateService : Service(), SensorEventListener2 {
         super.onCreate()
         var intentFilter = IntentFilter();
         intentFilter.addAction(STOP_ACTION);
-        registerReceiver(broadcastReceiver, intentFilter);
+        /*registerReceiver(broadcastReceiver, intentFilter);*/
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiver, intentFilter)
+        }
         mSensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         mHeartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)!!;
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager).run{
@@ -64,7 +69,7 @@ class HeartRateService : Service(), SensorEventListener2 {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
+        println("HeartRateService started")
         createNotificationChannel();
         var notificationIntent = Intent(this, MainActivity::class.java);
         val pendingIntent = PendingIntent.getActivity(
@@ -95,16 +100,14 @@ class HeartRateService : Service(), SensorEventListener2 {
     }
 
     private fun createNotificationChannel(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                "hrservice",
-                "HeartWear Background Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager =
-                getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
-        }
+        val serviceChannel = NotificationChannel(
+            "hrservice",
+            "HeartWear Background Service",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        val manager =
+            getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(serviceChannel)
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
@@ -125,5 +128,9 @@ class HeartRateService : Service(), SensorEventListener2 {
         updateHRIntent.action = "updateHR";
         updateHRIntent.putExtra("bpm", roundedHeartRate);
         this.sendBroadcast(updateHRIntent);
+        val sharedPreferences = getSharedPreferences("HeartRatePrefs", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.putInt("heartRate", roundedHeartRate)
+        editor.apply()
     }
 }

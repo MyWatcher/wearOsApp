@@ -8,6 +8,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -24,7 +28,10 @@
 
         <service
             android:name="com.eipsaferoad.owl.heartRate.HeartRateService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="health"
+            />
 
         <!--
                Set to true if your app is Standalone, that is, it does not require the handheld

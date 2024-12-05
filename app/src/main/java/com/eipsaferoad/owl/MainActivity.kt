@@ -100,6 +100,13 @@ class MainActivity : ComponentActivity(),
         }
     }
 
+    private val runnableHR: Runnable = object : Runnable {
+        override fun run() {
+            fetchHr()
+            handler.postDelayed(this, 1000)
+        }
+    }
+
     private fun refreshAccessToken() {
         val email = LocalStorage.getData(this, EnvEnum.EMAIL.value);
         val password = LocalStorage.getData(this, EnvEnum.PASSWORD.value);
@@ -135,7 +142,12 @@ class MainActivity : ComponentActivity(),
         checkPermission(android.Manifest.permission.BODY_SENSORS, 100)
         checkPermission(android.Manifest.permission.VIBRATE, 100);
         filter.addAction("updateHR")
-        registerReceiver(broadcastReceiver, filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(broadcastReceiver, filter)
+        }
+        /*registerReceiver(broadcastReceiver, filter)*/
         setTheme(android.R.style.Theme_DeviceDefault)
         initVibration()
         url.value = ReadEnvVar.readEnvVar(this, ReadEnvVar.EnvVar.API_URL)
@@ -155,6 +167,7 @@ class MainActivity : ComponentActivity(),
         }
 
         handler.post(runnable)
+        handler.post(runnableHR)
 
         setContent {
             WearApp(this, bpm, isDrowning, alarms, url.value, { token -> accessToken.value = token }, mVibrator, vibrationEffectSingle, accessToken)
@@ -209,6 +222,7 @@ class MainActivity : ComponentActivity(),
         super.onDestroy()
         // Remove the callbacks to prevent memory leaks
         handler.removeCallbacks(runnable)
+        handler.removeCallbacks(runnableHR)
     }
 
     override fun onStart() {
@@ -217,7 +231,7 @@ class MainActivity : ComponentActivity(),
         Intent(this, HeartRateService::class.java).also { intent ->
             startService(intent);
         }
-
+        Toast.makeText(this, "Streaming started", Toast.LENGTH_LONG).show();
     }
 
     override fun onDataChanged(p0: DataEventBuffer) {
@@ -246,6 +260,40 @@ class MainActivity : ComponentActivity(),
                 mVibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
             }
             vibrationEffectSingle = VibrationEffect.createOneShot(500, VibrationEffect.EFFECT_HEAVY_CLICK)
+        }
+    }
+
+    private fun fetchHr() {
+        val sharedPreferences = getSharedPreferences("HeartRatePrefs", Context.MODE_PRIVATE)
+        val heartRate = sharedPreferences.getInt("heartRate", 0)
+        println("Heart rate: $heartRate")
+        bpm.value = heartRate.toString()
+        if (!accessToken.value.isNullOrEmpty()) {
+            val formBody = FormBody.Builder()
+                .add("heartRate", bpm.value)
+                .build()
+            val headers = Headers.Builder()
+                .add("Authorization", "Bearer ${accessToken.value}")
+                .build()
+            Request.makeRequest("${url.value}/api/heart-rate", headers, formBody, Request.Companion.REQUEST_TYPE.POST) {}
+            val jsonBody = JSONObject().toString();
+            Request.makeRequest(
+                "${url.value}/api/heart-rate",
+                Request.Companion.REQUEST_TYPE.GET,
+                { dto ->
+                    try {
+                        val jsonResponse = JSONObject(dto)
+                        val dataObject = jsonResponse.getJSONObject("data")
+                        val hrvResultObject = dataObject.getJSONObject("hrvResult")
+                        val isNormal = hrvResultObject.getBoolean("is_normal")
+                        isDrowning.value = !isNormal;
+                    } catch (e: JSONException) {
+                        Log.e("API CALL", "Error parsing JSON: $e")
+                    }
+                },
+                headers,
+                jsonBody,
+            )
         }
     }
 
