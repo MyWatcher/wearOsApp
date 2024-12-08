@@ -231,7 +231,6 @@ class MainActivity : ComponentActivity(),
         Intent(this, HeartRateService::class.java).also { intent ->
             startService(intent);
         }
-        Toast.makeText(this, "Streaming started", Toast.LENGTH_LONG).show();
     }
 
     override fun onDataChanged(p0: DataEventBuffer) {

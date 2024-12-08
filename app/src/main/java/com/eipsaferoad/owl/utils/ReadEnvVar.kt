@@ -18,6 +18,6 @@ class ReadEnvVar {
             vars[name] = data
             return data
         }
-        private val vars: MutableMap<EnvVar, String> = mutableMapOf()
+         val vars: MutableMap<EnvVar, String> = mutableMapOf()
     }
 }
